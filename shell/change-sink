@@ -1,0 +1,15 @@
+#!/bin/bash
+# Change the default sink and move all sink-input to this sink
+target_sink=$1
+
+pactl set-default-sink $target_sink
+if [ $? -ne 0 ]; then
+    echo "Couldn't find sink"
+    exit;
+fi
+
+
+pactl list short sink-inputs | while read sink ;do
+input=$(echo $sink | awk '{print $1;}')
+pactl move-sink-input $input $target_sink
+done

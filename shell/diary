@@ -1,0 +1,15 @@
+#!/bin/bash
+
+topic=$1
+year=$(date +"%Y")
+dir=~/Syncthing/Tagebuch/normal/$year
+
+if [ -z $topic ] ; then
+    filename="$(date +'%Y-%m-%d')"
+else
+    filename="$(date +'%Y-%m-%d')_$topic"
+fi
+
+mkdir -p $dir
+
+vim $dir/$filename

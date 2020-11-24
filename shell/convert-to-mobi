@@ -1,0 +1,22 @@
+#!/bin/bash
+
+for book in *.epub; do
+    echo "Converting $book";
+    ebook-convert "$book" "$(basename "$book" .epub).mobi";
+done
+
+for book in *.htm; do
+    echo "Converting $book";
+    ebook-convert "$book" "$(basename "$book" .htm).mobi";
+done
+
+for book in *.html; do
+    echo "Converting $book";
+    ebook-convert "$book" "$(basename "$book" .html).mobi";
+done
+
+for book in *.doc; do
+    echo "Converting $book";
+    abiword --to=html "$book"
+    ebook-convert "$(basename "$book" .doc).html" "$(basename "$book" .doc).mobi";
+done

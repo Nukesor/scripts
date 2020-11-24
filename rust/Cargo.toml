@@ -1,0 +1,22 @@
+[package]
+name = "script-utils"
+version = "0.1.0"
+authors = ["Arne Beer <contact@arne.beer>"]
+edition = "2018"
+
+#[[bin]]
+#name = "pull-all"
+#path = "scripts/pull_all.rs"
+
+[lib]
+name = "script_utils"
+path = "src/lib.rs"
+
+[dependencies]
+anyhow = "^1"
+chrono = "^0.4"
+shellexpand = "^2"
+subprocess = "^0.2"
+structopt = "^0.3"
+strum = "^0.19"
+strum_macros = "^0.19"

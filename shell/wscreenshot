@@ -1,0 +1,48 @@
+#!/bin/sh
+
+#1. Parameter: Sleep time
+#2. Parameter: Quality
+#3. Parameter: Workspace(s)
+
+#Example: wscreenshot 5 80 1,2,3
+
+resolution_x=2560
+resolution_y=1440
+
+sleeptime=${1:-5}
+quality=${2:-100}
+workspaces=$(echo $3 | tr "," "\n")
+
+allowed_spaces=()
+for space in $workspaces; do
+    allowed_spaces+=('"current_workspace":"'$space'"')
+done
+
+echo "Quality: $quality"
+echo "Sleeping for $sleeptime seconds"
+
+while true; do
+    output=$(i3-msg -t "get_outputs")
+    lock_active=$(ps -aux | grep  i3lock | wc -l)
+    name=$(date +%Y-%m-%d-%H%M%S_${resolution_x}x${resolution_y}_scrot.png)
+    outname=$(date +%Y-%m-%d-%H%M%S_${outresolution_x}x${outresolution_y}_scrot.png)
+
+    on_screen=false
+    for space in "${allowed_spaces[@]}"; do
+        grep -q "$space" <<< "$output"
+        if [[ $? -eq 0 ]] ; then
+            on_screen=true
+            break
+        fi
+    done
+    # Actually do the screenshot
+    # it should be cropped later
+    if [[ $lock_active -gt 1  ]]; then
+        echo "i3 lock is active"
+    elif [ "$on_screen" == false ]; then
+        echo "Not on specified Workspaces"
+    elif [ "$on_screen" == true ]; then
+        scrot -q $quality $name
+    fi
+    sleep $sleeptime
+done

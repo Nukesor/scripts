@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+    echo "Two arguments needed"
+elif [ -z "$2" ]; then
+    echo "Two arguments needed"
+else
+    command="rename workspace $1 to $2"
+    echo $command
+    i3-msg $command
+fi
+

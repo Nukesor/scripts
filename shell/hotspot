@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Get the current Mac address
+ipLinkString=($(ip addr))
+
+count=0
+for element in "${ipLinkString[@]}"; do
+    # Get name of the current ethernet interface
+    if [[ $element == "en"* ]]; then
+        idLength=$(expr length $element)-1
+        eth_interface=${element:0:$idLength}
+    # Get name of the current wlan interface
+    elif [[ $element == "wlp"* ]]; then
+        idLength=$(expr length $element)-1
+        wlan_interface=${element:0:$idLength}
+    fi
+    ((++count))
+done
+
+sudo create_ap $wlan_interface $eth_interface lolnuke atomrofl

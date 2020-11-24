@@ -1,0 +1,26 @@
+#!/bin/bash
+rm -rf ~/Desktop
+
+# Cache stuff
+rm -rf ~/.ansible
+rm -rf ~/.pkg-cache
+rm -rf ~/.cmake
+rm -rf ~/.subversion
+rm -rf ~/.dotnet
+rm -rf ~/.ipfs
+rm -rf ~/.nuget
+rm -rf ~/.mono
+
+# History stuff
+rm -rf ~/.wget-hsts
+rm -rf ~/.NERDTreeBookmarks
+rm -rf ~/.bash_history
+rm -rf ~/.python_history
+rm -rf ~/.putty
+
+# Java stuff
+rm -rf ~/.java
+rm -rf ~/.gradle
+
+# Wtf
+rm -rf ~/.esd_auth

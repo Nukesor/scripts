@@ -1,0 +1,48 @@
+#!/bin/bash
+current=$(pwd)
+save_dir=$HOME/.local/share/cataclysm-dda
+build_dir=$HOME/.cache/cataclysm-dda
+
+
+if [ ! -d "$save_dir" ]; then
+    mkdir -p $save_dir
+fi
+
+if [ ! -d "$build_dir" ]; then
+    git clone git@github.com:CleverRaven/Cataclysm-DDA.git $build_dir
+fi
+
+cd $build_dir
+if [ "$1" == "build" ]; then
+    commit_hash=$(git rev-parse HEAD)
+    git pull
+    make RELEASE=1 TILES=1 USE_XDG_DIR=1 CLANG=1 LUA=1 LTO=1 CCACHE=1 LOCALIZE=0 -j9
+    if [ $? -eq 0 ]; then
+        touch $save_dir/clean-hashes
+        grep $commit_hash $save_dir/clean-hashes
+        if [ $? -ne 0 ]; then
+            echo $commit_hash >> $save_dir/clean-hashes
+        fi
+    fi
+elif [ "$1" == "save" ]; then
+    echo "Saving"
+    rm -rf $save_dir/save-bak
+    cp -r $save_dir/save $save_dir/save-bak
+    name=$(date +%Y-%m-%d-%H%M%S_save)
+    mkdir -p $save_dir/backup/
+    zip -r $save_dir/backup/$name.zip $save_dir/save
+elif [ "$1" == "restore" ]; then
+    echo "Restoring save"
+    rm -rf $save_dir/save
+    cp -r $save_dir/save-bak $save_dir/save
+elif [ "$1" == "start" ]; then
+    echo "Starting"
+else
+    echo "Starting game. Valid commands are 'start', 'build', 'save' and 'restore'"
+fi
+
+if [ "$1" != "hash" ]; then
+    ./cataclysm-launcher
+fi
+
+cd $current
