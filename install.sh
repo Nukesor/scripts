@@ -8,12 +8,14 @@ set -euo pipefail
 # Get absolute path this script's directory
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+BIN_FOLDER="$HOME/.bin"
 # Install all bash scripts
-mkdir -p ~/.bin
+mkdir -p "$BIN_FOLDER"
+
 for file in $DIR/shell/* ; do
     file_name=$(basename $file)
     if [ ! -L "$HOME/.bin/${file_name}" ]; then
-        ln -s $file ~/.bin/$file_name
+        ln -s $file $BIN_FOLDER/$file_name
     fi
 done
 
