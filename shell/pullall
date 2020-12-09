@@ -1,0 +1,23 @@
+#!/bin/sh
+
+REPO=~/repos
+
+cd $REPO
+
+for dir in ./*; do
+    category=$(basename $dir)
+    cd $REPO/$category
+    for subdir in ./*; do
+        name=$(basename $subdir)
+        repo=$REPO/$category/$name
+        if [ ! -d "$repo" ]; then
+            continue;
+        fi
+
+        cd $repo
+        if [ -d ".git" ]; then
+            echo "Pulling $name"
+            git pull
+        fi
+    done
+done
