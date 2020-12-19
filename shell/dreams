@@ -5,9 +5,9 @@ year=$(date +"%Y")
 dir=~/Syncthing/Tagebuch/dreams/$year
 
 if [ -z $topic ] ; then
-    filename="$(date +'%Y-%m-%d')"
+    filename="$(date -d "now - 6 hours" +'%Y-%m-%d')"
 else
-    filename="$(date +'%Y-%m-%d')_$topic"
+    filename="$(date -d "now - 6 hours" +'%Y-%m-%d')_$topic"
 fi
 
 mkdir -p $dir
