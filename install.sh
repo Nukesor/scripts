@@ -27,7 +27,7 @@ mkdir -p $DIR/other
 
 # Humanizer
 if [ ! -d "$DIR/other/humanizer" ]; then
-    git clone git@github.com:nukesor/humanizer.git $DIR/other/humanizer
+    git clone https://github.com/Nukesor/humanizer.git $DIR/other/humanizer
 fi
 cd $DIR/other/humanizer
 git pull
