@@ -7,7 +7,7 @@ if [ ! -d "$save_dir" ]; then
 fi
 
 if [ "$1" == "save" ]; then
-    echo "Saving"
+    echo "$(date +'%T') Saving"
     # Remove previous save hot-backup
     rm -rf $save_dir/save-bak
     # Create new hot-backup
@@ -19,13 +19,15 @@ if [ "$1" == "save" ]; then
     tar -I zstd -cf $save_dir/backup/$name.tar.zst -C $save_dir ./save
 
 elif [ "$1" == "restore" ]; then
-    echo "Restoring save"
+    echo "$(date +'%T') Restoring save"
 
     # Restore previous hot-backup
     rm -rf $save_dir/save
     cp -r $save_dir/save-bak $save_dir/save
 else
-    echo "Starting game. Other valid commands are 'save' and 'restore'"
+    echo "$(date +'%T') Starting game. Other valid commands are 'save' and 'restore'"
 fi
 
 cataclysm-tiles
+
+exit 0
