@@ -16,7 +16,7 @@ if [ "$1" == "save" ]; then
     # Create permanent backup
     name=$(date +%Y-%m-%d-%H%M%S_save)
     mkdir -p $save_dir/backup/
-    zip -r $save_dir/backup/$name.zip $save_dir/save
+    tar -I zstd -cf $save_dir/backup/$name.tar.zst -C $save_dir ./save
 
 elif [ "$1" == "restore" ]; then
     echo "Restoring save"
