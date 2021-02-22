@@ -17,6 +17,7 @@ if [ "$1" == "save" ]; then
     name=$(date +%Y-%m-%d-%H%M%S_save)
     mkdir -p $save_dir/backup/
     tar -I zstd -cf $save_dir/backup/$name.tar.zst -C $save_dir ./save
+    echo "$(date +'%T') Saving complete"
 
 elif [ "$1" == "restore" ]; then
     echo "$(date +'%T') Restoring save"
@@ -25,9 +26,8 @@ elif [ "$1" == "restore" ]; then
     rm -rf $save_dir/save
     cp -r $save_dir/save-bak $save_dir/save
 else
+    cataclysm-tiles
     echo "$(date +'%T') Starting game. Other valid commands are 'save' and 'restore'"
 fi
-
-cataclysm-tiles
 
 exit 0
