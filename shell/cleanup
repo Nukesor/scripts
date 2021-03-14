@@ -24,3 +24,11 @@ rm -rf ~/.gradle
 
 # Wtf
 rm -rf ~/.esd_auth
+rm -rf ~/.sbd
+rm -rf ~/GPUCache
+rm -rf ~/.gnome
+
+
+# Desktop/File manager
+rm -rf ~/.local/share/Trash/*
+rm -rf ~/Desktop
