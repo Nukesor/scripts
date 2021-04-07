@@ -1,0 +1,17 @@
+#!/bin/bash
+
+action=$1
+device=$2
+
+if [ "$action" == "up" ]; then
+    sudo ip link set $device down
+    sudo iwconfig $device mode monitor
+    sudo ip link set $device up
+elif [ "$action" == "down" ]; then
+    sudo ip link set $device down
+    sudo iwconfig $device mode managed
+    sudo ip link set $device up
+else
+    echo "Use 'up' or 'down'"
+fi
+
