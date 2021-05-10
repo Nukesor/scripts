@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Switch between lts and non-lts arch linux kernel
+pkglist=$HOME/.setup/pkglist
+tmp=.tmp
+
+if [ "$1" == "lts" ]; then
+    echo "Switching to lts"
+    sudo pacman -Rns nvidia --noconfirm
+    sudo pacman -Rns linux-headers --noconfirm
+    sudo pacman -Rns linux --noconfirm
+
+    sudo pacman -S linux-lts linux-lts-headers --noconfirm --needed
+    sudo pacman -S nvidia-lts --noconfirm --needed
+    sudo pacman -S virtualbox-host-dkms --needed
+else
+    sudo pacman -Rns nvidia-lts --noconfirm
+    sudo pacman -Rns linux-lts-headers --noconfirm
+    sudo pacman -Rns linux-lts --noconfirm
+
+    sudo pacman -S linux linux-headers --needed
+    sudo pacman -S nvidia --noconfirm --needed
+    sudo pacman -S virtualbox-host-modules-arch --needed
+fi
+
