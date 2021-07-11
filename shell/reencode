@@ -10,7 +10,7 @@ extension="${filename##*.}"
 filename="${filename%.*}"
 destination_path=~/reencodes/$filename.mp4
 
-mkdir ~/reencodes
+mkdir -p ~/reencodes
 
 nice -n 15 ffmpeg \
     -i $original_path \
