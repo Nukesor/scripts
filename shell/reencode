@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Takes some file and reencodes it with sensible defaults to ~/ as mp4 with h.265
+
+set -euo pipefail
+
+original_path=$1
+filename=$(basename -- "$original_path")
+extension="${filename##*.}"
+filename="${filename%.*}"
+destination_path=~/reencodes/$filename.mp4
+
+mkdir ~/reencodes
+
+ffmpeg \
+    -i $original_path \
+    -map 0 \
+    -c copy \
+    -c:a libfdk_aac \
+    -b:a 128k \
+    -c:v libx265 \
+    -preset slower \
+    -x265-params \
+    -crf=19:pools=none \
+    -threads 8 \
+    $destination_path
