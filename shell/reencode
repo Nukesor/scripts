@@ -14,9 +14,9 @@ mkdir -p ~/reencodes
 
 nice -n 15 ffmpeg \
     -i $original_path \
-    -map 0 \
+    -map 0:0 \
     -sn \
-    -c copy \
+    -dn \
     -c:a libfdk_aac \
     -b:a 128k \
     -c:v libx265 \
