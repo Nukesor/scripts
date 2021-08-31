@@ -1,4 +1,4 @@
-use std::env::current_dir;
+use std::{env::current_dir, path::PathBuf};
 
 use script_utils::*;
 
@@ -6,7 +6,14 @@ fn main() -> Result<()> {
     setup();
 
     let current_dir = current_dir()?;
-    let dirs = read_dir_or_fail(current_dir, Some(FileType::Directory))?;
+    rename_directories(current_dir)?;
+
+    Ok(())
+}
+
+/// Remove all invalid characters and substrings from directories in the given directory.
+fn rename_directories(path: PathBuf) -> Result<()> {
+    let dirs = read_dir_or_fail(path, Some(FileType::Directory))?;
 
     for dir in dirs {
         let path = dir.path();
@@ -109,4 +116,38 @@ fn invalid_characters() -> Vec<char> {
 
 fn trailing_chars() -> Vec<char> {
     vec![' ', '\n', '\r']
+}
+
+#[cfg(test)]
+mod test {
+    use std::{
+        fs::{create_dir, remove_dir_all},
+        path::Path,
+    };
+
+    use super::*;
+
+    #[test]
+    fn simple_test() -> Result<()> {
+        // Create test directory.
+        let parent_dir = Path::new("/tmp/clean_names_test_dir");
+        create_dir(&parent_dir)?;
+
+        // Create a directory whose name should be cleaned.
+        let inner_dir = Path::new(
+            "/tmp/clean_names_test_dir/  [this is some_test] Name that should stay;(and some) {more random} (stuff)",
+        );
+        create_dir(&inner_dir)?;
+
+        // Clean directory name and ensure it looks as expected.
+        rename_directories(parent_dir.to_path_buf())?;
+        assert!(
+            Path::new("/tmp/clean_names_test_dir/Name that should stay").exists(),
+            "The directory hasn' been correctly renamed"
+        );
+
+        // Cleanup
+        remove_dir_all(&parent_dir)?;
+        Ok(())
+    }
 }
