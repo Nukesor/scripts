@@ -7,7 +7,7 @@ if [ -z "$1" ]; then
     echo "Please specify at least one package"
 else
     for package in "$@"; do
-        yay -S $package --noconfirm --needed
+        paru -S $package --noconfirm --needed
         if [ $? -ne 0 ]; then
             echo "$package not found or failed while installing"
         else
