@@ -20,18 +20,4 @@ for file in $DIR/shell/* ; do
 done
 
 # Rust scripts
-#cargo install --path $DIR/rust
-
-# Install all other helper
-mkdir -p $DIR/other
-
-# Humanizer
-if [ ! -d "$DIR/other/humanizer" ]; then
-    git clone https://github.com/Nukesor/humanizer.git $DIR/other/humanizer
-fi
-cd $DIR/other/humanizer
-git pull
-cargo install --path .
-
-cd $DIR
-
+cargo install --path $DIR/rust
