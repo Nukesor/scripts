@@ -1,7 +1,7 @@
 use chrono::Duration;
-use clap::Clap;
+use clap::Parser;
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 #[clap(
     name = "Humanizer",
     about = "Bring your machine output into human readable form",
@@ -12,13 +12,13 @@ pub struct CliArguments {
     pub cmd: SubCommand,
 }
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 pub enum SubCommand {
     /// Format something time related
     Time(Time),
 }
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 pub struct Time {
     /// Convert nano seconds to human readable time
     #[clap(short, long)]
