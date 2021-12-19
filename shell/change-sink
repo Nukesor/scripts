@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+
 # Change the default sink and move all sink-input to this sink
 target_sink=$1
 

@@ -1,3 +1,0 @@
-#!/bin/bash
-
-firefox --new-window="https://app.plex.tv/"

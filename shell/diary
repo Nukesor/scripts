@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 topic=$1
 year=$(date +"%Y")

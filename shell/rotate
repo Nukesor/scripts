@@ -11,6 +11,7 @@
 # 3 = 90Clockwise and Vertical Flip
 #
 # Use -vf "transpose=2,transpose=2" for 180 degrees.
+set -euo pipefail
 
 file=$2
 

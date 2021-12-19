@@ -3,6 +3,7 @@
 #1. Parameter: Sleep time
 #2. Parameter: Quality
 #3. Parameter: Workspace(s)
+set -euo pipefail
 
 #Example: wscreenshot 5 80 1,2,3
 

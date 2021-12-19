@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 for book in *.epub; do
     echo "Converting $book";

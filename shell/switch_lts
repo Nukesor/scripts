@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Switch between lts and non-lts arch linux kernel
 pkglist=$HOME/.setup/pkglist
