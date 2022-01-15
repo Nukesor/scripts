@@ -19,11 +19,11 @@ fn main() -> Result<()> {
         .join(", ");
 
     if concat.trim().is_empty() {
-        println!("Nothing to do :)");
+        println!("Nothing to do :) |");
         return Ok(());
     }
 
-    println!("todos: {concat}");
+    println!("todos: {concat} |");
 
     Ok(())
 }
