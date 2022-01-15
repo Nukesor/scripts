@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::{bail, Result};
 use shellexpand::tilde;
-use subprocess::{Exec, ExitStatus};
+use subprocess::{CaptureData, Exec, Redirection};
 
 /// This is a convenience layer around [Subprocess's Exec](subprocess.Exec).
 /// It provides simple exit handling for single Commands.
@@ -37,8 +37,10 @@ impl Cmd {
     }
 
     /// Run the command and return the exit status
-    pub fn run(&self) -> Result<ExitStatus> {
-        let mut exec = Exec::shell(&self.command);
+    pub fn run(&self) -> Result<CaptureData> {
+        let mut exec = Exec::shell(&self.command)
+            .stdout(Redirection::Pipe)
+            .stderr(Redirection::Pipe);
 
         // Set the current working directory.
         if let Some(cwd) = &self.cwd {
@@ -50,8 +52,8 @@ impl Cmd {
         }
 
         // Check if there are any critical errors.
-        let exit_status = match exec.join() {
-            Ok(exit_status) => exit_status,
+        let capture = match exec.capture() {
+            Ok(capture) => capture,
             Err(error) => {
                 bail!(
                     "Failed during: {} \nCritical error: {}",
@@ -61,22 +63,22 @@ impl Cmd {
             }
         };
 
-        Ok(exit_status)
+        Ok(capture)
     }
 
     /// A wrapper around `run` that also errors on non-zero exit statuses
-    pub fn run_success(&self) -> Result<()> {
-        let exit_status = self.run()?;
+    pub fn run_success(&self) -> Result<CaptureData> {
+        let capture = self.run()?;
 
         // Return an error on any non-1 exit codes
-        if !exit_status.success() {
+        if !capture.exit_status.success() {
             bail!(
                 "Failed during: {}\nGot non-zero exit code: {:?}",
                 &self.command,
-                exit_status
+                capture.exit_status
             );
         }
 
-        Ok(())
+        Ok(capture)
     }
 }

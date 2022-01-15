@@ -4,14 +4,6 @@ version = "0.1.0"
 authors = ["Arne Beer <contact@arne.beer>"]
 edition = "2018"
 
-[[bin]]
-name = "clean_names"
-path = "scripts/clean_names.rs"
-
-[[bin]]
-name = "humanizer"
-path = "scripts/humanizer.rs"
-
 [lib]
 name = "script_utils"
 path = "src/lib.rs"
@@ -22,6 +14,10 @@ better-panic = "^0.2"
 
 clap = { version="3", features=["derive"] }
 shellexpand = "^2"
+
+serde = "1"
+serde_json = "1"
+serde_derive = "1"
 
 chrono = "^0.4"
 subprocess = "^0.2"

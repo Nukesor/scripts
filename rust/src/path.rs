@@ -1,8 +1,8 @@
-use std::fs::DirEntry;
+use std::fs::{read_to_string, DirEntry};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use shellexpand::tilde;
 
 pub enum FileType {
@@ -10,6 +10,14 @@ pub enum FileType {
     File,
 }
 
+/// Read the contents of a file.
+pub fn read_file<T: ToString>(path: T) -> Result<String> {
+    let path = tilde(&path.to_string()).to_string();
+    let path = Path::new(&path);
+    read_to_string(path).context("Failed to read file")
+}
+
+/// Check if a file exists.
 pub fn path_exists<T: ToString>(path: T) -> bool {
     Path::new(&tilde(&path.to_string()).to_string()).exists()
 }
