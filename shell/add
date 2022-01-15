@@ -1,6 +1,4 @@
 #!/bin/bash
-set -euo pipefail
-
 # Install a package from pacman and add it to a pkglist.
 
 pkglist=$HOME/.setup/pkglist
