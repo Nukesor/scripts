@@ -41,7 +41,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    println!("todos: {output} |");
+    println!("{output} |");
 
     Ok(())
 }
