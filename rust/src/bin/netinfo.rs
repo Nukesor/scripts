@@ -13,7 +13,7 @@ struct Interface {
     //    pub flags: Vec<String>,
     //    pub mtu: usize,
     //    pub qdisc: String,
-    //    pub operstate: String,
+    pub operstate: String,
     //    pub group: Option<String>,
     //    pub txqlen: usize,
     //    pub link_type: String,
@@ -49,7 +49,7 @@ fn main() -> Result<()> {
         }
 
         // Device doesn't have an active connection.
-        if interface.addr_info.is_empty() {
+        if interface.addr_info.is_empty() || interface.operstate == "DOWN" {
             continue;
         }
 
