@@ -5,6 +5,8 @@
 # set -o pipefail: automatically exits, if any command in a pipe fails (normally only the last is counted)
 set -euo pipefail
 
+cp hooks/* .git/hooks
+
 # Get absolute path this script's directory
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
