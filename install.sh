@@ -14,6 +14,7 @@ BIN_FOLDER="$HOME/.bin"
 # Install all bash scripts
 mkdir -p "$BIN_FOLDER"
 
+echo "Deploying shell scripts"
 for file in $DIR/shell/* ; do
     file_name=$(basename $file)
     if [ ! -L "$HOME/.bin/${file_name}" ]; then
@@ -22,4 +23,5 @@ for file in $DIR/shell/* ; do
 done
 
 # Rust scripts
+echo "Installing rust scripts"
 cargo install --path $DIR/rust
