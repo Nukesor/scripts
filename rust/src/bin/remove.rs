@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use clap::Parser;
 
 use crossterm::style::{style, Attribute, Color, Stylize};
-use script_utils::{path::*, process::Cmd};
+use script_utils::prelude::*;
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -15,32 +15,23 @@ use script_utils::{path::*, process::Cmd};
 pub struct CliArguments {
     pub packages: Vec<String>,
 
-    #[clap(short, long)]
-    pub pkglist_file: Option<PathBuf>,
+    #[clap(short, long, default_value = "~/.setup/pkglist")]
+    pub pkglist_file: PathBuf,
 }
 
 fn main() -> Result<()> {
     // Parse commandline options.
     let args = CliArguments::parse();
 
-    let pkglist_path = args
-        .pkglist_file
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_else(|| "~/.setup/pkglist".to_string());
-
-    let pkglist_path = expand(pkglist_path);
-
-    let mut pkglist: Vec<String> = read_file(&pkglist_path)
-        .context("Failed to read pkglist file.")?
-        .split("\n")
-        .map(|name| name.to_string())
-        .collect();
+    let pkglist_path = expand(&args.pkglist_file);
+    let mut pkglist: Vec<String> =
+        read_file_lines(&pkglist_path).context("Failed to read pkglist file.")?;
 
     let mut results = Vec::new();
 
     // Install the packages
     for package in args.packages.iter() {
-        results.push((package.to_string(), install_package(package)?));
+        results.push((package.to_string(), uninstall_package(package)?));
     }
 
     for (name, result) in results {
@@ -99,7 +90,7 @@ enum InstallResult {
     Failed(String),
 }
 
-fn install_package(name: &str) -> Result<InstallResult> {
+fn uninstall_package(name: &str) -> Result<InstallResult> {
     // Check if the package is already installed
     let capture = Cmd::new(format!("sudo pacman -Qi {name}")).run()?;
     let is_installed = capture.success();

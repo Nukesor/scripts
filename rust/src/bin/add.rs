@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use clap::Parser;
 
 use crossterm::style::{style, Attribute, Color, Stylize};
-use script_utils::{path::*, process::Cmd};
+use script_utils::prelude::*;
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -15,26 +15,17 @@ use script_utils::{path::*, process::Cmd};
 pub struct CliArguments {
     pub packages: Vec<String>,
 
-    #[clap(short, long)]
-    pub pkglist_file: Option<PathBuf>,
+    #[clap(short, long, default_value = "~/.setup/pkglist")]
+    pub pkglist_file: PathBuf,
 }
 
 fn main() -> Result<()> {
     // Parse commandline options.
     let args = CliArguments::parse();
 
-    let pkglist_path = args
-        .pkglist_file
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_else(|| "~/.setup/pkglist".to_string());
-
-    let pkglist_path = expand(pkglist_path);
-
-    let mut pkglist: Vec<String> = read_file(&pkglist_path)
-        .context("Failed to read pkglist file.")?
-        .split("\n")
-        .map(|name| name.to_string())
-        .collect();
+    let pkglist_path = expand(&args.pkglist_file);
+    let mut pkglist: Vec<String> =
+        read_file_lines(&pkglist_path).context("Failed to read pkglist file.")?;
 
     let mut results = Vec::new();
 
@@ -44,44 +35,7 @@ fn main() -> Result<()> {
     }
 
     for (name, result) in results {
-        match result {
-            InstallResult::Failed(output) => {
-                println!(
-                    "{} to install {} with error:\n{}",
-                    style("Failed").with(Color::Red),
-                    style(name).attribute(Attribute::Bold),
-                    output
-                );
-            }
-            InstallResult::Success => {
-                let added_text = if add_to_list(&mut pkglist, &name) {
-                    style(" and added it to the pkglist")
-                } else {
-                    style(", but it was already in the pkglist.").with(Color::Yellow)
-                };
-
-                println!(
-                    " {} {}{}",
-                    style(name).attribute(Attribute::Bold),
-                    style("has been installed").with(Color::Green),
-                    added_text,
-                );
-            }
-            InstallResult::Installed => {
-                let added_text = if add_to_list(&mut pkglist, &name) {
-                    style(", but it wasn't in the pkglist yet.").with(Color::Yellow)
-                } else {
-                    style(" and in the pkglist")
-                };
-
-                println!(
-                    " {} is {}{}",
-                    style(name).attribute(Attribute::Bold),
-                    style("already installed").with(Color::Green),
-                    added_text,
-                );
-            }
-        }
+        handle_result(&mut pkglist, &name, result);
     }
 
     // Write the packagelist
@@ -96,6 +50,47 @@ enum InstallResult {
     Success,
     Installed,
     Failed(String),
+}
+
+fn handle_result(pkglist: &mut Vec<String>, name: &str, result: InstallResult) {
+    match result {
+        InstallResult::Failed(output) => {
+            println!(
+                "{} to install {} with error:\n{}",
+                style("Failed").with(Color::Red),
+                style(name).attribute(Attribute::Bold),
+                output
+            );
+        }
+        InstallResult::Success => {
+            let added_text = if add_to_list(pkglist, &name) {
+                style(" and added it to the pkglist")
+            } else {
+                style(", but it was already in the pkglist.").with(Color::Yellow)
+            };
+
+            println!(
+                " {} {}{}",
+                style(name).attribute(Attribute::Bold),
+                style("has been installed").with(Color::Green),
+                added_text,
+            );
+        }
+        InstallResult::Installed => {
+            let added_text = if add_to_list(pkglist, &name) {
+                style(", but it wasn't in the pkglist yet.").with(Color::Yellow)
+            } else {
+                style(" and in the pkglist")
+            };
+
+            println!(
+                " {} is {}{}",
+                style(name).attribute(Attribute::Bold),
+                style("already installed").with(Color::Green),
+                added_text,
+            );
+        }
+    }
 }
 
 fn install_package(name: &str) -> Result<InstallResult> {
