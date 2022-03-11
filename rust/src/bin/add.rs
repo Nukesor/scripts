@@ -13,17 +13,29 @@ use script_utils::prelude::*;
     author = "Arne Beer <contact@arne.beer>"
 )]
 pub struct CliArguments {
+    /// The packages that should be uninstalled.
     pub packages: Vec<String>,
 
-    #[clap(short, long, default_value = "~/.setup/pkglist")]
-    pub pkglist_file: PathBuf,
+    #[clap(short, long)]
+    pub pkglist_file: Option<PathBuf>,
+
+    /// For AUR operations, another manager and pkglist will be used by default.
+    #[clap(short, long)]
+    pub aur: bool,
 }
 
 fn main() -> Result<()> {
     // Parse commandline options.
     let args = CliArguments::parse();
 
-    let pkglist_path = expand(&args.pkglist_file);
+    let pkglist_path = if let Some(path) = &args.pkglist_file {
+        expand(path)
+    } else if args.aur {
+        expand(&PathBuf::from("~/.setup/aur-pkglist"))
+    } else {
+        expand(&PathBuf::from("~/.setup/pkglist"))
+    };
+
     let mut pkglist: Vec<String> =
         read_file_lines(&pkglist_path).context("Failed to read pkglist file.")?;
 
@@ -31,7 +43,7 @@ fn main() -> Result<()> {
 
     // Install the packages
     for package in args.packages.iter() {
-        results.push((package.to_string(), install_package(package)?));
+        results.push((package.to_string(), install_package(args.aur, package)?));
     }
 
     for (name, result) in results {
@@ -91,13 +103,15 @@ fn handle_result(pkglist: &mut Vec<String>, name: &str, result: InstallResult) {
     }
 }
 
-fn install_package(name: &str) -> Result<InstallResult> {
+fn install_package(aur: bool, name: &str) -> Result<InstallResult> {
+    let manager = if aur { "paru" } else { "pacman" };
+
     // Check if the package is already installed
-    let capture = Cmd::new(format!("sudo pacman -Qi {name}")).run()?;
+    let capture = Cmd::new(format!("sudo {manager} -Qi {name}")).run()?;
     let is_installed = capture.success();
 
     if !is_installed {
-        let capture = Cmd::new(format!("sudo pacman -S {name} --noconfirm --needed")).run()?;
+        let capture = Cmd::new(format!("sudo {manager} -S {name} --noconfirm --needed")).run()?;
 
         if !capture.exit_status.success() {
             return Ok(InstallResult::Failed(capture.stdout_str()));
