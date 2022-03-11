@@ -86,6 +86,8 @@ fn main() -> Result<()> {
 
     // Write the packagelist
     pkglist.sort();
+    pkglist.retain(|name| !name.trim().is_empty());
+
     std::fs::write(pkglist_path, pkglist.join("\n")).context("Failed to write pkglist file")?;
 
     Ok(())
