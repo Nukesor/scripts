@@ -1,4 +1,5 @@
 #!/bin/env python3
+# Name and move all files from my digital camera to ~/temp/unsorted
 import pathlib
 import os
 from datetime import datetime

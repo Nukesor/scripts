@@ -1,4 +1,5 @@
 #!/usr/bin/bash
+# A script to sync a remote postgres database to the current machine
 set -euo pipefail
 host=$1
 database=$2
