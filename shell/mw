@@ -1,4 +1,5 @@
 #!/bin/bash
+# Rename a i3 workspace from $1 to $2
 
 if [ -z "$1" ]; then
     echo "Two arguments needed"

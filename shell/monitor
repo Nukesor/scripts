@@ -1,4 +1,5 @@
 #!/bin/bash
+# Change your device $1 to monitor mode via $2 with 'up' and 'down'
 set -euo pipefail
 
 action=$1

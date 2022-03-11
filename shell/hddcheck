@@ -1,6 +1,7 @@
 #!/bin/bash
+# Check all hard drives and display critical device stats.
 
-# Devices
+# Get all HDD devices
 devices=$(lsblk -d -o NAME -n)
 
 for device in $devices; do
