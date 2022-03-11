@@ -8,5 +8,12 @@ pub fn read_file_lines(path: &PathBuf) -> Result<Vec<String>> {
 
 /// Read the contents of a file.
 pub fn read_file(path: &PathBuf) -> Result<String> {
-    read_to_string(path).context(format!("Failed to read file {}", path.to_string_lossy()))
+    read_to_string(path).context(format!("Failed to read file {:?}", path))
+}
+
+/// Read the contents of a file.
+pub fn sort_and_write(mut strings: Vec<String>, path: &PathBuf) -> Result<()> {
+    strings.sort();
+    strings.retain(|name| !name.trim().is_empty());
+    std::fs::write(path, strings.join("\n")).context(format!("Failed to write to file {:?}", path))
 }

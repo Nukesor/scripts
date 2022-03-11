@@ -19,6 +19,12 @@ pub struct CliArguments {
     pub pkglist_file: PathBuf,
 }
 
+enum UninstallResult {
+    Success,
+    NotInstalled,
+    Failed(String),
+}
+
 fn main() -> Result<()> {
     // Parse commandline options.
     let args = CliArguments::parse();
@@ -35,62 +41,57 @@ fn main() -> Result<()> {
     }
 
     for (name, result) in results {
-        match result {
-            InstallResult::Failed(output) => {
-                println!(
-                    "{} to uninstall {} with error:\n{}",
-                    style("Failed").with(Color::Red),
-                    style(name).attribute(Attribute::Bold),
-                    output
-                );
-            }
-            InstallResult::Success => {
-                let removed_text = if removed_from_list(&mut pkglist, &name) {
-                    style(" and removed from to the pkglist")
-                } else {
-                    style(", but it wasn't in the pkglist.").with(Color::Yellow)
-                };
-
-                println!(
-                    " {} {}{}",
-                    style(name).attribute(Attribute::Bold),
-                    style("has been uninstalled").with(Color::Green),
-                    removed_text,
-                );
-            }
-            InstallResult::NotInstalled => {
-                let removed_text = if removed_from_list(&mut pkglist, &name) {
-                    style(", but it was in the pkglist.").with(Color::Yellow)
-                } else {
-                    style(" and not in the pkglist")
-                };
-
-                println!(
-                    " {} {}{}",
-                    style(name).attribute(Attribute::Bold),
-                    style("was not installed").with(Color::Green),
-                    removed_text,
-                );
-            }
-        }
+        handle_result(&mut pkglist, &name, result);
     }
 
     // Write the packagelist
-    pkglist.sort();
-    pkglist.retain(|name| !name.trim().is_empty());
-
-    std::fs::write(pkglist_path, pkglist.join("\n")).context("Failed to write pkglist file")?;
+    sort_and_write(pkglist, &pkglist_path)?;
 
     Ok(())
 }
 
-enum InstallResult {
-    Success,
-    NotInstalled,
-    Failed(String),
+fn handle_result(pkglist: &mut Vec<String>, name: &str, result: UninstallResult) {
+    match result {
+        UninstallResult::Failed(output) => {
+            println!(
+                "{} to uninstall {} with error:\n{}",
+                style("Failed").with(Color::Red),
+                style(name).attribute(Attribute::Bold),
+                output
+            );
+        }
+        UninstallResult::Success => {
+            let removed_text = if removed_from_list(pkglist, &name) {
+                style(" and removed from to the pkglist")
+            } else {
+                style(", but it wasn't in the pkglist.").with(Color::Yellow)
+            };
+
+            println!(
+                " {} {}{}",
+                style(name).attribute(Attribute::Bold),
+                style("has been uninstalled").with(Color::Green),
+                removed_text,
+            );
+        }
+        UninstallResult::NotInstalled => {
+            let removed_text = if removed_from_list(pkglist, &name) {
+                style(", but it was in the pkglist.").with(Color::Yellow)
+            } else {
+                style(" and not in the pkglist")
+            };
+
+            println!(
+                " {} {}{}",
+                style(name).attribute(Attribute::Bold),
+                style("was not installed").with(Color::Green),
+                removed_text,
+            );
+        }
+    }
 }
 
-fn uninstall_package(name: &str) -> Result<InstallResult> {
+fn uninstall_package(name: &str) -> Result<UninstallResult> {
     // Check if the package is already installed
     let capture = Cmd::new(format!("sudo pacman -Qi {name}")).run()?;
     let is_installed = capture.success();
@@ -99,13 +100,13 @@ fn uninstall_package(name: &str) -> Result<InstallResult> {
         let capture = Cmd::new(format!("sudo pacman -Rns {name} --noconfirm")).run()?;
 
         if !capture.exit_status.success() {
-            return Ok(InstallResult::Failed(capture.stdout_str()));
+            return Ok(UninstallResult::Failed(capture.stdout_str()));
         } else {
-            return Ok(InstallResult::Success);
+            return Ok(UninstallResult::Success);
         }
     }
 
-    Ok(InstallResult::NotInstalled)
+    Ok(UninstallResult::NotInstalled)
 }
 
 fn removed_from_list(list: &mut Vec<String>, name: &str) -> bool {
