@@ -10,11 +10,15 @@ pub enum FileType {
     File,
 }
 
-/// Read the contents of a file.
-pub fn read_file<T: ToString>(path: T) -> Result<String> {
+/// Expand the tilde and return a valid PathBuf.
+pub fn expand<T: ToString>(path: T) -> PathBuf {
     let path = tilde(&path.to_string()).to_string();
-    let path = Path::new(&path);
-    read_to_string(path).context("Failed to read file")
+    PathBuf::from(&path)
+}
+
+/// Read the contents of a file.
+pub fn read_file(path: &PathBuf) -> Result<String> {
+    read_to_string(path).context(format!("Failed to read file {}", path.to_string_lossy()))
 }
 
 /// Check if a file exists.

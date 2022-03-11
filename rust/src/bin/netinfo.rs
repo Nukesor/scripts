@@ -1,8 +1,8 @@
 #!/bin/python3
 use anyhow::Result;
+use serde_derive::Deserialize;
 
 use script_utils::process::Cmd;
-use serde_derive::Deserialize;
 
 /// Main output for outpuft for
 #[derive(Debug, Deserialize)]

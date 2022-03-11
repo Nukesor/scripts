@@ -40,7 +40,7 @@ impl Cmd {
     pub fn run(&self) -> Result<CaptureData> {
         let mut exec = Exec::shell(&self.command)
             .stdout(Redirection::Pipe)
-            .stderr(Redirection::Pipe);
+            .stderr(Redirection::Merge);
 
         // Set the current working directory.
         if let Some(cwd) = &self.cwd {
