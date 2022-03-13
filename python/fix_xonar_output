@@ -1,0 +1,56 @@
+#!/bin/env python
+import json
+import subprocess
+
+
+def is_Xonar(device):
+    """Check whether a device is the desired Xonar."""
+    if "info" not in device:
+        return False
+    if "props" not in device["info"]:
+        return False
+
+    props = device["info"]["props"]
+
+    if "api.alsa.card.name" not in props:
+        return False
+
+    if props["api.alsa.card.name"] != "Xonar STX II":
+        return False
+
+    return True
+
+def main():
+    while True:
+        stdout, stderr = subprocess.Popen(
+                "pw-dump",
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+        ).communicate()
+
+        output = json.loads(stdout)
+
+        for device in output:
+            if not is_Xonar(device):
+                continue
+
+            print("Found Xonar STX II card")
+
+            props = device["info"]["props"]
+            card_id = props["api.alsa.card"]
+
+            proc = subprocess.Popen(
+                f"amixer -c {card_id} cset numid=22 'Headphones'",
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                shell=True,
+            )
+
+            print("Output interface set.")
+            return
+
+        print("Found Xonar STX II card")
+
+main()
