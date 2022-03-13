@@ -1,5 +1,6 @@
 #!/bin/env python
 import json
+import time
 import subprocess
 
 
@@ -20,13 +21,14 @@ def is_Xonar(device):
 
     return True
 
+
 def main():
     while True:
-        stdout, stderr = subprocess.Popen(
-                "pw-dump",
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
+        stdout, _ = subprocess.Popen(
+            "pw-dump",
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         ).communicate()
 
         output = json.loads(stdout)
@@ -40,7 +42,7 @@ def main():
             props = device["info"]["props"]
             card_id = props["api.alsa.card"]
 
-            proc = subprocess.Popen(
+            subprocess.Popen(
                 f"amixer -c {card_id} cset numid=22 'Headphones'",
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -51,6 +53,8 @@ def main():
             print("Output interface set.")
             return
 
-        print("Found Xonar STX II card")
+        print("Didn't find Xonar STX II card yet")
+        time.sleep(1)
+
 
 main()
