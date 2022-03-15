@@ -1,4 +1,3 @@
-#!/bin/python3
 use anyhow::Result;
 use clap::{ArgEnum, Parser};
 use serde_derive::Deserialize;
@@ -77,7 +76,6 @@ struct Props {
     //object_id: 49,
 }
 
-/// Print a string, representing the current network state with IP.
 fn main() -> Result<()> {
     // Parse commandline options.
     let args = CliArguments::parse();
