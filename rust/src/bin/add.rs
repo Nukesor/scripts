@@ -12,7 +12,7 @@ use script_utils::prelude::*;
     about = "Add a package to your package list",
     author = "Arne Beer <contact@arne.beer>"
 )]
-pub struct CliArguments {
+struct CliArguments {
     /// The packages that should be uninstalled.
     pub packages: Vec<String>,
 

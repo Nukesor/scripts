@@ -73,9 +73,10 @@ impl Cmd {
         // Return an error on any non-1 exit codes
         if !capture.exit_status.success() {
             bail!(
-                "Failed during: {}\nGot non-zero exit code: {:?}",
+                "Failed during: {}\nGot non-zero exit code: {:?}:\n{}",
                 &self.command,
-                capture.exit_status
+                capture.exit_status,
+                capture.stdout_str(),
             );
         }
 
