@@ -49,7 +49,7 @@ fn main() -> Result<()> {
 
     // Install the packages
     for package in args.packages.iter() {
-        results.push((package.to_string(), uninstall_package(args.aur, package)?));
+        results.push((package.to_string(), uninstall_package(package)?));
     }
 
     for (name, result) in results {
@@ -103,15 +103,13 @@ fn handle_result(pkglist: &mut Vec<String>, name: &str, result: UninstallResult)
     }
 }
 
-fn uninstall_package(aur: bool, name: &str) -> Result<UninstallResult> {
-    let manager = if aur { "paru" } else { "pacman" };
-
+fn uninstall_package(name: &str) -> Result<UninstallResult> {
     // Check if the package is already installed
-    let capture = Cmd::new(format!("sudo {manager} -Qi {name}")).run()?;
+    let capture = Cmd::new(format!("sudo pacman -Qi {name}")).run()?;
     let is_installed = capture.success();
 
     if is_installed {
-        let capture = Cmd::new(format!("sudo {manager} -Rns {name} --noconfirm")).run()?;
+        let capture = Cmd::new(format!("sudo pacman -Rns {name} --noconfirm")).run()?;
 
         if !capture.exit_status.success() {
             return Ok(UninstallResult::Failed(capture.stdout_str()));

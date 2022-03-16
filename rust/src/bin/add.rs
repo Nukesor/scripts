@@ -105,13 +105,14 @@ fn handle_result(pkglist: &mut Vec<String>, name: &str, result: InstallResult) {
 
 fn install_package(aur: bool, name: &str) -> Result<InstallResult> {
     let manager = if aur { "paru" } else { "pacman" };
+    let sudo = if aur { "" } else { "sudo " };
 
     // Check if the package is already installed
-    let capture = Cmd::new(format!("sudo {manager} -Qi {name}")).run()?;
+    let capture = Cmd::new(format!("{sudo}{manager} -Qi {name}")).run()?;
     let is_installed = capture.success();
 
     if !is_installed {
-        let capture = Cmd::new(format!("sudo {manager} -S {name} --noconfirm --needed")).run()?;
+        let capture = Cmd::new(format!("{sudo}{manager} -S {name} --noconfirm --needed")).run()?;
 
         if !capture.exit_status.success() {
             return Ok(InstallResult::Failed(capture.stdout_str()));
