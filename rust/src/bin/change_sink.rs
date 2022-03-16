@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::{ArgEnum, Parser};
-use serde_derive::Deserialize;
 
+use script_utils::pw_dump::*;
 use script_utils::{process::Cmd, unwrap_or_continue};
 
 #[derive(Parser, Debug)]
@@ -21,59 +21,6 @@ enum Target {
     HDMI,
     BuiltIn,
     Xonar,
-}
-
-/// Representation of a device
-#[derive(Debug, Deserialize)]
-struct Device {
-    //pub id: usize,
-    pub info: Option<Info>,
-    //pub type: String,
-    //pub version: int,
-    //pub permissions: Vec<String>,
-}
-
-/// Detailed info about a device
-#[derive(Debug, Deserialize)]
-struct Info {
-    pub props: Option<Props>,
-    //pub error: Option<String>,
-    //pub max-input-ports: usize,
-    //pub max-output-ports: usize,
-    //pub change-mask: [ "input-ports", "output-ports", "state", "props", "params" ],
-    //pub n-input-ports: usize,
-    //pub n-output-ports: usize,
-    //pub state: "suspended",
-}
-
-#[derive(Debug, Deserialize)]
-struct Props {
-    #[serde(rename = "media.class")]
-    media_class: Option<String>,
-    //#[serde(rename = "device.id")]
-    //device_id: usize,
-    #[serde(rename = "node.description")]
-    node_description: Option<String>,
-    #[serde(rename = "object.serial")]
-    object_serial: usize,
-    //#[serde(rename="object.path")]
-    //object_path: "v4l2:/dev/video2",
-    //#[serde(rename="device.api")]
-    //device_api: "v4l2",
-    //#[serde(rename="node.name")]
-    //node_name: "v4l2_input_pci-0000_00_14_0-usb-0_8_1_0",
-    //#[serde(rename="factory.name")]
-    //factory_name: "api_v4l2_source",
-    //#[serde(rename="node.pause-on-idle")]
-    //node_pause-on-idle: false,
-    //#[serde(rename="client.id")]
-    //client_id: 32,
-    //#[serde(rename="media.role")]
-    //media_role: "Camera",
-    //#[serde(rename="node.driver")]
-    //node_driver: true,
-    //#[serde(rename="object.id")]
-    //object_id: 49,
 }
 
 fn main() -> Result<()> {

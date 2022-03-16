@@ -1,6 +1,7 @@
 pub mod file;
 pub mod path;
 pub mod process;
+pub mod pw_dump;
 
 pub use anyhow::{anyhow, bail, Context, Result};
 pub use path::{get_newest_file, path_exists, read_dir_or_fail, FileType};
