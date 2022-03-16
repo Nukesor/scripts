@@ -76,9 +76,9 @@ fn main() -> Result<()> {
 
         let name = interface.ifname;
         let ip_addr = &addr.local;
-        let symbol = if name.starts_with("e") {
+        let symbol = if name.starts_with('e') {
             ""
-        } else if name.starts_with("w") {
+        } else if name.starts_with('w') {
             ""
         } else {
             "🖧"

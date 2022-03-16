@@ -18,7 +18,7 @@ struct CliArguments {
 
 #[derive(Parser, ArgEnum, Copy, Clone, Debug)]
 enum Target {
-    HDMI,
+    Hdmi,
     BuiltIn,
     Xonar,
 }
@@ -51,7 +51,7 @@ fn main() -> Result<()> {
 
         // Check if we find a device for the given name.
         let device_found = match args.target {
-            Target::HDMI => description.contains("HDMI"),
+            Target::Hdmi => description.contains("HDMI"),
             Target::BuiltIn => description.starts_with("Built-in"),
             Target::Xonar => description.contains("Xonar"),
         };
@@ -69,13 +69,13 @@ fn main() -> Result<()> {
         // 188 56 187 PipeWire float32le 2ch 48000Hz
         //
         // We're interested in the first number.
-        let capture = Cmd::new(format!("pactl list short sink-inputs")).run_success()?;
+        let capture = Cmd::new("pactl list short sink-inputs").run_success()?;
 
         let input_ids: Vec<String> = capture
             .stdout_str()
             .split('\n')
             .filter(|line| !line.trim().is_empty())
-            .filter_map(|line| line.split('\t').nth(0).map(|id| id.to_string()))
+            .filter_map(|line| line.split('\t').next().map(|id| id.to_string()))
             .collect();
 
         //println!("{input_ids:?}");

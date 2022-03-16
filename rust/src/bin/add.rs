@@ -73,7 +73,7 @@ fn handle_result(pkglist: &mut Vec<String>, name: &str, result: InstallResult) {
             );
         }
         InstallResult::Success => {
-            let added_text = if add_to_list(pkglist, &name) {
+            let added_text = if add_to_list(pkglist, name) {
                 style(" and added it to the pkglist")
             } else {
                 style(", but it was already in the pkglist.").with(Color::Yellow)
@@ -87,7 +87,7 @@ fn handle_result(pkglist: &mut Vec<String>, name: &str, result: InstallResult) {
             );
         }
         InstallResult::Installed => {
-            let added_text = if add_to_list(pkglist, &name) {
+            let added_text = if add_to_list(pkglist, name) {
                 style(", but it wasn't in the pkglist yet.").with(Color::Yellow)
             } else {
                 style(" and in the pkglist")
@@ -130,7 +130,7 @@ fn add_to_list(list: &mut Vec<String>, name: &str) -> bool {
         return false;
     }
 
-    list.push(name.to_string());
+    list.push(name);
 
     true
 }

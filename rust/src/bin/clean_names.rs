@@ -17,16 +17,14 @@ fn rename_directories(path: PathBuf) -> Result<()> {
 
     for dir in dirs {
         let path = dir.path();
-        let filename = path.file_name().ok_or(anyhow!(format!(
-            "Couldn't get filename from path: {:?}",
-            path
-        )))?;
-        let filename = filename.to_str().ok_or(anyhow!(format!(
-            "Filename contains invalid utf8: {:?}",
-            filename
-        )))?;
+        let filename = path
+            .file_name()
+            .ok_or_else(|| anyhow!(format!("Couldn't get filename from path: {:?}", path)))?;
+        let filename = filename
+            .to_str()
+            .ok_or_else(|| anyhow!(format!("Filename contains invalid utf8: {:?}", filename)))?;
 
-        let mut chars: Vec<char> = filename.clone().chars().collect();
+        let mut chars: Vec<char> = filename.chars().collect();
         // Check for each brace, if there is are matching pairs of braces in the path.
         // Everything between those braces will be removed.
         for (start, end) in get_braces() {

@@ -25,15 +25,11 @@ fn main() -> Result<()> {
     let mut lines = content.lines();
 
     let mut next_todo = lines
-        .find(|line| line.starts_with("#"))
+        .find(|line| line.starts_with('#'))
         .map(|line| line.to_string());
 
-    loop {
-        if let Some(headline) = next_todo {
-            next_todo = handle_todo_items(&headline, &mut lines, &mut output);
-        } else {
-            break;
-        }
+    while let Some(headline) = next_todo {
+        next_todo = handle_todo_items(&headline, &mut lines, &mut output);
     }
 
     if output.trim().is_empty() {
@@ -52,7 +48,7 @@ fn main() -> Result<()> {
 /// Retuns the next todo headline, we hit one.
 fn handle_todo_items(headline: &str, lines: &mut Lines, output: &mut String) -> Option<String> {
     // First things first, append the name of the todo.
-    if let Some(headline) = headline.strip_prefix("#") {
+    if let Some(headline) = headline.strip_prefix('#') {
         output.push_str(headline.trim());
     }
 
@@ -60,7 +56,7 @@ fn handle_todo_items(headline: &str, lines: &mut Lines, output: &mut String) -> 
     let mut completed_items = 0;
     for line in lines {
         // We found the next todo. Abort.
-        if line.starts_with("#") {
+        if line.starts_with('#') {
             // Add the current item counter and a comma for todo separation.
             if items > 0 {
                 output.push_str(&format!(" ({completed_items}/{items})"))

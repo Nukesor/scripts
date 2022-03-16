@@ -73,7 +73,7 @@ fn handle_result(pkglist: &mut Vec<String>, name: &str, result: UninstallResult)
             );
         }
         UninstallResult::Success => {
-            let removed_text = if removed_from_list(pkglist, &name) {
+            let removed_text = if removed_from_list(pkglist, name) {
                 style(" and removed from to the pkglist")
             } else {
                 style(", but it wasn't in the pkglist.").with(Color::Yellow)
@@ -87,7 +87,7 @@ fn handle_result(pkglist: &mut Vec<String>, name: &str, result: UninstallResult)
             );
         }
         UninstallResult::NotInstalled => {
-            let removed_text = if removed_from_list(pkglist, &name) {
+            let removed_text = if removed_from_list(pkglist, name) {
                 style(", but it was in the pkglist.").with(Color::Yellow)
             } else {
                 style(" and not in the pkglist")
