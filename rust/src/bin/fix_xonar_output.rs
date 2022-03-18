@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 use script_utils::pw_dump::*;
 use script_utils::{process::Cmd, unwrap_or_continue};
@@ -10,7 +10,13 @@ fn main() -> Result<()> {
     let tries = 10;
     let mut current_try = 0;
     while tries > current_try {
-        let success = set_xonar_output()?;
+        let success = match set_xonar_output() {
+            Err(err) => {
+                println!("Failed to set output with error:\n{err:?}");
+                continue;
+            }
+            Ok(success) => success,
+        };
         if success {
             return Ok(());
         }
@@ -27,10 +33,13 @@ fn main() -> Result<()> {
 
 fn set_xonar_output() -> Result<bool> {
     // Get current pipewire state.
-    let capture = Cmd::new("pw-dump").run_success()?;
+    let capture = Cmd::new("pw-dump")
+        .run_success()
+        .context("pw-dump execution failed.")?;
 
     // Run through all devices and find the one we desire.
-    let devices: Vec<Device> = serde_json::from_str(&capture.stdout_str())?;
+    let devices: Vec<Device> = serde_json::from_str(&capture.stdout_str())
+        .context("Failed to deserialize pw-dump output.")?;
     for device in devices {
         let info = unwrap_or_continue!(device.info);
         let props = unwrap_or_continue!(info.props);
@@ -43,7 +52,9 @@ fn set_xonar_output() -> Result<bool> {
 
         let card_id = unwrap_or_continue!(props.api_alsa_card);
         // Set the correct output.
-        Cmd::new(format!("amixer -c {card_id} cset numid=22 'Headphones'")).run_success()?;
+        Cmd::new(format!("amixer -c {card_id} cset numid=22 'Headphones'"))
+            .run_success()
+            .context("Failed to set correct output via amixer")?;
         println!("Success");
 
         return Ok(true);
