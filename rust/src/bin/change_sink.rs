@@ -21,6 +21,7 @@ enum Target {
     Hdmi,
     BuiltIn,
     Xonar,
+    Unitek,
 }
 
 fn main() -> Result<()> {
@@ -53,7 +54,8 @@ fn main() -> Result<()> {
         let device_found = match args.target {
             Target::Hdmi => description.contains("HDMI"),
             Target::BuiltIn => description.starts_with("Built-in"),
-            Target::Xonar => description.contains("Xonar"),
+            Target::Xonar => description.contains("Xonar Essence STX II"),
+            Target::Unitek => description.contains("Unitek Y-247A"),
         };
 
         if !device_found {
