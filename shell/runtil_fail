@@ -1,0 +1,10 @@
+#!/bin/bash
+
+count=0
+echo "Run $count"
+((++count))
+
+while "$@"; do
+    echo "Run $count"
+    ((++count))
+done
