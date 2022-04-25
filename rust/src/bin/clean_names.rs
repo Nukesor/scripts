@@ -71,6 +71,14 @@ fn rename_directories(path: PathBuf) -> Result<()> {
             chars.remove(c);
         }
 
+        // Replace all unwanted characters with their replacement.
+        for (target, replacement) in chars_to_replace() {
+            chars = chars
+                .iter()
+                .map(|c| if *c == target { replacement } else { *c })
+                .collect();
+        }
+
         // Compile the modified character list into a new string.
         let mut new_name: String = chars.into_iter().collect();
 
@@ -112,6 +120,12 @@ fn invalid_characters() -> Vec<char> {
     chars
 }
 
+/// Chars that should be replaced with another char.
+fn chars_to_replace() -> Vec<(char, char)> {
+    vec![('~', '-')]
+}
+
+/// Trailing characters that should be removed entirely.
 fn trailing_chars() -> Vec<char> {
     vec![' ', '\n', '\r']
 }
