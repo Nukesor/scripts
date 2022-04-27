@@ -14,6 +14,9 @@ lines = file1.readlines()
 slow_tests = []
 
 for line in lines:
+    # Simply ignore all other log output
+    if not line.startswith("{"):
+        continue
     test = json.loads(line)
 
     # Ignore suite entries, we're intrested in individual tests
