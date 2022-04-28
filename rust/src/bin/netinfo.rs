@@ -96,11 +96,17 @@ fn main() -> Result<()> {
         // Set the symbol for the current network type.
         let symbol = match network_type {
             NetworkType::Ethernet => '',
-            NetworkType::Wlan => wifi_strength(&name),
+            NetworkType::Wlan => '',
             NetworkType::Vpn => '',
         };
 
-        output.push(format!("{symbol} {name}: {ip_addr}"));
+        let strength = match network_type {
+            NetworkType::Ethernet => "",
+            NetworkType::Wlan => wifi_strength(&name),
+            NetworkType::Vpn => "",
+        };
+
+        output.push(format!("{symbol}{strength} {name}: {ip_addr}"));
     }
 
     if output.is_empty() {
@@ -122,13 +128,13 @@ fn main() -> Result<()> {
 /// -80 dBm	Minimum value required to make a connection.
 ///  You cannot count on a reliable connection or sufficient signal strength to use services at this level.
 /// -90 dBm	It is very unlikely that you will be able to connect or make use of any services with this signal strength.
-pub fn wifi_strength(interface: &str) -> char {
+pub fn wifi_strength(interface: &str) -> &'static str {
     let capture_data =
         Cmd::new(format!("iwconfig {interface} | rg '^.*Signal level=.*'")).run_success();
     // Return an wifi error symbol if the signal strength cannot be determined.
     let capture_data = match capture_data {
         Ok(capture) => capture,
-        Err(_) => return '',
+        Err(_) => return "❌",
     };
 
     let re = Regex::new(r".*Signal level=-(\d*) dBm").unwrap();
@@ -136,20 +142,20 @@ pub fn wifi_strength(interface: &str) -> char {
     let output = String::from_utf8_lossy(&capture_data.stdout);
     let captures = match re.captures(&output) {
         Some(captures) => captures,
-        None => return '',
+        None => return "❌",
     };
 
     let level: usize = match captures.get(1).unwrap().as_str().parse() {
         Ok(level) => level,
-        Err(_) => return '',
+        Err(_) => return "❌",
     };
 
     match level {
-        20..=60 => '',
-        61..=67 => '',
-        68..=70 => '',
-        71..=80 => '',
-        81..=90 => '',
-        _ => '',
+        20..=60 => "▇",
+        61..=67 => "▅",
+        68..=70 => "▃",
+        71..=80 => "▁",
+        81..=90 => "!",
+        _ => "❌",
     }
 }
