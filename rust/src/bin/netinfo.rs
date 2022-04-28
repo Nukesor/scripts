@@ -134,7 +134,7 @@ pub fn wifi_strength(interface: &str) -> &'static str {
     // Return an wifi error symbol if the signal strength cannot be determined.
     let capture_data = match capture_data {
         Ok(capture) => capture,
-        Err(_) => return "❌",
+        Err(_) => return " ❌",
     };
 
     let re = Regex::new(r".*Signal level=-(\d*) dBm").unwrap();
@@ -142,20 +142,20 @@ pub fn wifi_strength(interface: &str) -> &'static str {
     let output = String::from_utf8_lossy(&capture_data.stdout);
     let captures = match re.captures(&output) {
         Some(captures) => captures,
-        None => return "❌",
+        None => return " ❌",
     };
 
     let level: usize = match captures.get(1).unwrap().as_str().parse() {
         Ok(level) => level,
-        Err(_) => return "❌",
+        Err(_) => return " ❌",
     };
 
     match level {
-        20..=60 => "▇",
-        61..=67 => "▅",
-        68..=70 => "▃",
-        71..=80 => "▁",
-        81..=90 => "!",
-        _ => "❌",
+        20..=60 => " ▇",
+        61..=67 => " ▅",
+        68..=70 => " ▃",
+        71..=80 => " ▁",
+        81..=90 => " !",
+        _ => " ❌",
     }
 }
