@@ -3,6 +3,7 @@ use clap::{ArgEnum, Parser};
 
 use script_utils::pw_dump::*;
 use script_utils::{process::Cmd, unwrap_or_continue};
+use strum_macros::Display;
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -16,7 +17,7 @@ struct CliArguments {
     pub target: Target,
 }
 
-#[derive(Parser, ArgEnum, Copy, Clone, Debug)]
+#[derive(Parser, ArgEnum, Display, Copy, Clone, Debug)]
 enum Target {
     Hdmi,
     BuiltIn,
@@ -85,6 +86,12 @@ fn main() -> Result<()> {
         for id in input_ids {
             Cmd::new(format!("pactl move-sink-input {id} {device_id}")).run_success()?;
         }
+
+        Cmd::new(format!(
+            "notify-send --expire-time=2000 'Changed sink to {}'",
+            args.target
+        ))
+        .run_success()?;
 
         return Ok(());
     }
