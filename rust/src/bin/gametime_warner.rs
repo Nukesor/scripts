@@ -28,7 +28,7 @@ pub struct CliArguments {
     pub threshold: i64,
 
     /// The interval at which the user will be notified to stop playing.
-    #[clap(short, long, default_value = "15")]
+    #[clap(short, long, default_value = "10")]
     pub stop_notification_interval: i64,
 }
 
@@ -62,6 +62,13 @@ fn main() -> Result<()> {
     let mut running_games: HashMap<&'static str, RunningGame> = HashMap::new();
     let current_user_id = users::get_current_uid();
     logging::init_logger(args.verbose);
+    info!(
+        "\n
+        User will be regularily notified every {} minutes.
+        After {} minutes they'll be prompted to stop.
+        From then on they'll receive a notification every {} minutes\n",
+        args.notification_interval, args.threshold, args.stop_notification_interval,
+    );
 
     // Check every few minutes whether any games are up and running.
     // If they're running for the specified times, notify the user of this.
