@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::{ArgEnum, Parser};
 
 use script_utils::pw_dump::*;
-use script_utils::{process::Cmd, unwrap_or_continue};
+use script_utils::{exec::Cmd, unwrap_or_continue};
 use strum_macros::Display;
 
 #[derive(Parser, Debug)]

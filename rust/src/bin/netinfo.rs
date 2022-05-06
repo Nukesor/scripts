@@ -3,7 +3,7 @@ use anyhow::Result;
 use regex::Regex;
 use serde_derive::Deserialize;
 
-use script_utils::process::Cmd;
+use script_utils::exec::Cmd;
 
 /// Main output for outpuft for
 #[derive(Debug, Deserialize)]
