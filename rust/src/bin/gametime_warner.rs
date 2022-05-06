@@ -132,7 +132,7 @@ fn handle_running_game(
             info!("Sending normal notification for {name} at {time_string}");
             notify(
                 format!("You have been playing {name} for {time_string}"),
-                30000,
+                120 * 1000,
             )?;
         }
         running_game.notification_count = current_interval;
@@ -154,7 +154,7 @@ fn handle_running_game(
         info!("Sending stop notification for {name} at {time_string}");
         notify(
             format!("Stop playing {name}. You are at it since {time_string}"),
-            60000,
+            300 * 1000,
         )?;
         running_game.stop_notification_count = current_interval;
     }
