@@ -9,7 +9,7 @@ use script_utils::{logging, prelude::*, process::get_process_cmdlines};
 
 #[derive(Parser, Debug)]
 #[clap(
-    name = "Gametime Warner",
+    name = "Polizei",
     about = "A little background daemon which notifies the user if they play games for too long.",
     author = "Arne Beer <contact@arne.beer>"
 )]
