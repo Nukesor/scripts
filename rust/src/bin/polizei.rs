@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use anyhow::{Context, Result};
-use chrono::{DateTime, Local};
+use chrono::{DateTime, Duration, Local};
 use clap::Parser;
 
 use log::{debug, info};
@@ -38,6 +38,7 @@ const GAME_LIST: &[(&str, &str)] = &[
     ("Noita", "noita"),
     ("Apex Legends", "apex"),
     ("Satisfactory", "satisfactory"),
+    ("Starsector", "starsector"),
 ];
 
 struct RunningGame {
@@ -100,6 +101,8 @@ fn main() -> Result<()> {
             .collect::<Vec<&'static str>>()
         {
             if !found_games.contains(key) {
+                info!("{key} has been closed.");
+                // Remove the game from the list of running games.
                 running_games.remove(key);
             }
         }
