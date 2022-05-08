@@ -145,7 +145,8 @@ fn handle_running_game(
     //
 
     // Calculate the current stop interval we're in.
-    let current_interval = (elapsed_minutes - args.threshold / args.stop_notification_interval) + 1;
+    let current_interval =
+        ((elapsed_minutes - args.threshold) / args.stop_notification_interval) + 1;
 
     // Send the user a notification if we're in a new interval.
     if running_game.stop_notification_count < current_interval {
