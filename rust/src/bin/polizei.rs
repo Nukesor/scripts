@@ -136,6 +136,7 @@ fn handle_running_game(
             notify(
                 format!("You have been playing {name} for {time_string}"),
                 120 * 1000,
+                false,
             )?;
         }
         running_game.notification_count = current_interval;
@@ -159,6 +160,7 @@ fn handle_running_game(
         notify(
             format!("Stop playing {name}. You are at it since {time_string}"),
             300 * 1000,
+            true,
         )?;
         running_game.stop_notification_count = current_interval;
     }
@@ -166,10 +168,13 @@ fn handle_running_game(
     Ok(())
 }
 
-fn notify(text: String, timeout: usize) -> Result<()> {
-    Cmd::new(format!("notify-send --expire-time={timeout} '{text}'",))
-        .run_success()
-        .context("Failed to send notification.")?;
+fn notify(text: String, timeout: usize, critical: bool) -> Result<()> {
+    let critical = if critical { "--urgency critical" } else { "" };
+    Cmd::new(format!(
+        "notify-send --expire-time={timeout} '{text}' {critical}",
+    ))
+    .run_success()
+    .context("Failed to send notification.")?;
 
     Ok(())
 }
