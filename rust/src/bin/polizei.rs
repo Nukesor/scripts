@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use anyhow::{Context, Result};
-use chrono::{DateTime, Duration, Local};
+use chrono::{DateTime, Local};
 use clap::Parser;
 
 use log::{debug, info};
@@ -95,11 +95,7 @@ fn main() -> Result<()> {
         }
 
         // Remove games that're no longer active.
-        for key in running_games
-            .keys()
-            .map(|key| *key)
-            .collect::<Vec<&'static str>>()
-        {
+        for key in running_games.keys().copied().collect::<Vec<&'static str>>() {
             if !found_games.contains(key) {
                 info!("{key} has been closed.");
                 // Remove the game from the list of running games.
