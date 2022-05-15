@@ -32,13 +32,17 @@ pub struct CliArguments {
     pub stop_notification_interval: i64,
 }
 
-// A mapping of the game names to the substrings of the binary calls we should look for.
-const GAME_LIST: &[(&str, &str)] = &[
-    ("Factorio", "factorio"),
-    ("Noita", "noita"),
-    ("Apex Legends", "apex"),
-    ("Satisfactory", "satisfactory"),
-    ("Starsector", "starsector"),
+// A mapping of the games to watch
+// 1. Names of the game.
+// 2. Substrings of the binary we should look for.
+// 3. Whether we should warn the user if the threshold was exceeded.
+const GAME_LIST: &[(&str, &str, bool)] = &[
+    ("Factorio", "factorio", true),
+    ("Noita", "noita", true),
+    ("Apex Legends", "apex", false),
+    ("Satisfactory", "satisfactory", true),
+    ("Starsector", "starsector", true),
+    ("Terraria", "terraria", false),
 ];
 
 struct RunningGame {
@@ -81,7 +85,7 @@ fn main() -> Result<()> {
         // Check all processes for the specified binaries.
         for cmdline in processes {
             debug!("Checking {cmdline}");
-            for (name, binary) in GAME_LIST {
+            for (name, binary, strict) in GAME_LIST {
                 // The cmdline doesn't contain the game just exit early.
                 if !cmdline.to_lowercase().contains(binary) {
                     continue;
@@ -89,7 +93,7 @@ fn main() -> Result<()> {
 
                 info!("Found running game {name}");
                 found_games.insert(name);
-                handle_running_game(&args, &mut running_games, *name)?;
+                handle_running_game(&args, &mut running_games, *name, *strict)?;
                 break;
             }
         }
@@ -111,6 +115,7 @@ fn handle_running_game(
     args: &CliArguments,
     running_games: &mut HashMap<&'static str, RunningGame>,
     name: &'static str,
+    strict: bool,
 ) -> Result<()> {
     let mut running_game = running_games.entry(name).or_default();
     let now = Local::now();
@@ -121,7 +126,7 @@ fn handle_running_game(
     //
     // The user is still allowed to play. But we might notify them anyway.
     //
-    if elapsed_minutes < args.threshold {
+    if elapsed_minutes < args.threshold && !strict {
         // Calculate the current interval we're in.
         let current_interval = elapsed_minutes / args.notification_interval;
         let time_string = format_duration(elapsed_minutes);
