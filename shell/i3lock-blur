@@ -1,15 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-file1="/tmp/i3lock-blur.png"
-file2="/tmp/i3lock-blur_temp.png"
+file=/tmp/i3lock-blur.png
 
-ratio="5"
-shrink=$(python -c "print('{:0.5f}'.format(100/${ratio}))")
-expand=$(python -c "print('{:0.5f}'.format(100 * ${ratio}))")
-
-scrot -d0 -o "$file1"
-convert "$file1" -filter Point -resize $shrink% "$file1"
-convert "$file1" -filter Point -resize $expand% "$file2"
-i3lock -e -i $file2
-rm "$file1" "$file2"
+~/.cache/cargo/bin/blur 5 $file
+i3lock -e -i $file &
