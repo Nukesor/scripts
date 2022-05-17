@@ -32,4 +32,4 @@ done
 
 # Rust scripts
 echo "Installing rust scripts"
-cargo install --path $DIR/rust
+cargo install --path $DIR
