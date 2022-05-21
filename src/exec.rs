@@ -1,12 +1,12 @@
+//! This is a convenience layer around [Subprocess's Exec](subprocess.Exec).
+//! It provides simple exit handling for single Commands.
+//! This doesn't have pipe support yet.
 use std::collections::HashMap;
 
 use anyhow::{bail, Result};
 use shellexpand::tilde;
 use subprocess::{CaptureData, Exec, Redirection};
 
-/// This is a convenience layer around [Subprocess's Exec](subprocess.Exec).
-/// It provides simple exit handling for single Commands.
-/// This doesn't work with pipes.
 pub struct Cmd {
     cwd: Option<String>,
     env: HashMap<String, String>,
