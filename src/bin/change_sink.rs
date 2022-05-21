@@ -1,3 +1,7 @@
+//! Small convenience script to quickly change the output sink.
+//! It also moves all current outputs to that sink as well.
+//!
+//! This is currently used by me via shortcuts.
 use anyhow::Result;
 use clap::{ArgEnum, Parser};
 

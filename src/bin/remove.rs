@@ -1,3 +1,7 @@
+//! A convenience wrapper to uninstall packages via pacman.
+//!
+//! This script keeps track of explicitly installed packages in a text file.
+//! Can also be used to install AUR packages, which are tracked in a separate file.
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};

@@ -1,3 +1,5 @@
+//! Alsa somehow doesn't properly restore the settings for my Xonar audio card.
+//! This script fixes this and sets the correct audio output.
 use std::time::Duration;
 
 use anyhow::{Context, Result};

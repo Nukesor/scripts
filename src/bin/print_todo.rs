@@ -1,3 +1,5 @@
+//! This script prints a minimal summary of my todo list.
+//! It's designed for use in a status bar.
 use std::{fs::read_to_string, path::PathBuf, str::Lines};
 
 use anyhow::Result;

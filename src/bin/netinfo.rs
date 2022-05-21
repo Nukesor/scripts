@@ -1,4 +1,9 @@
-#!/bin/python3
+//! A tool for use in use with status bars.
+//!
+//! It displays information about currently available network devices such as:
+//! - IP Address
+//! - Type
+//! - Signal strength
 use anyhow::Result;
 use regex::Regex;
 use serde_derive::Deserialize;

@@ -1,3 +1,7 @@
+//! A convenience wrapper to install packages via pacman or paru.
+//!
+//! This script keeps track of explicitly installed packages in a text file.
+//! Can also be used to install AUR packages, which are tracked in a separate file.
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
@@ -16,6 +20,9 @@ struct CliArguments {
     /// The packages that should be uninstalled.
     pub packages: Vec<String>,
 
+    /// The default locations are:
+    /// - `~/.setup/pkglist`
+    /// - `~/.setup/aur-pkglist`
     #[clap(short, long)]
     pub pkglist_file: Option<PathBuf>,
 
@@ -28,6 +35,7 @@ fn main() -> Result<()> {
     // Parse commandline options.
     let args = CliArguments::parse();
 
+    // Use the default fallbacks if the user didn't provide any explicit path.
     let pkglist_path = if let Some(path) = &args.pkglist_file {
         expand(path)
     } else if args.aur {

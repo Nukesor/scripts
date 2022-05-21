@@ -1,3 +1,7 @@
+//! Remove unwanted or unnecessary bits from filenames.
+//! This is mostly for use when working with files from Windows users.
+//!
+//! They somehow love to put "[some tag]", "{}", "-" and other stuff in their filenames.
 use std::{env::current_dir, path::PathBuf};
 
 use script_utils::*;

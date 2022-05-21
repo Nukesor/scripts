@@ -1,3 +1,8 @@
+//! A small helper binary to convert some raw values into human readable form.
+//! For now, this includes:
+//!
+//! - Seconds -> Datetime
+//! - Nanoseconds -> Datetime
 use chrono::Duration;
 use clap::Parser;
 
