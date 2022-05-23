@@ -85,7 +85,6 @@ fn main() -> Result<()> {
         let mut found_games: HashSet<&'static str> = HashSet::new();
         // Check all processes for the specified binaries.
         for cmdline in processes {
-            debug!("Checking {cmdline}");
             for (name, binary, strict) in GAME_LIST {
                 // The cmdline doesn't contain the game just exit early.
                 if !cmdline.to_lowercase().contains(binary) {
@@ -128,6 +127,7 @@ fn handle_running_game(
     // The user is still allowed to play. But we might notify them anyway.
     //
     if elapsed_minutes < args.threshold || !strict {
+        debug!("Below threshold or not strict");
         // Calculate the current interval we're in.
         let current_interval = elapsed_minutes / args.notification_interval;
         let time_string = format_duration(elapsed_minutes);
@@ -150,6 +150,7 @@ fn handle_running_game(
     // The user should really stop to play now.
     //
 
+    debug!("Above threshold and strict.");
     // Calculate the current stop interval we're in.
     let current_interval =
         ((elapsed_minutes - args.threshold) / args.stop_notification_interval) + 1;
