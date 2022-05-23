@@ -127,7 +127,7 @@ fn handle_running_game(
     //
     // The user is still allowed to play. But we might notify them anyway.
     //
-    if elapsed_minutes < args.threshold && !strict {
+    if elapsed_minutes < args.threshold || !strict {
         // Calculate the current interval we're in.
         let current_interval = elapsed_minutes / args.notification_interval;
         let time_string = format_duration(elapsed_minutes);
