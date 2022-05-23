@@ -43,6 +43,7 @@ const GAME_LIST: &[(&str, &str, bool)] = &[
     ("Satisfactory", "satisfactory", true),
     ("Starsector", "starsector", true),
     ("Terraria", "terraria", false),
+    ("some game", "streaming_client", true),
 ];
 
 struct RunningGame {
