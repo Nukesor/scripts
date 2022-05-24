@@ -22,14 +22,6 @@ for file in $DIR/shell/* ; do
     fi
 done
 
-echo "Deploying python scripts"
-for file in $DIR/python/* ; do
-    file_name=$(basename $file)
-    if [ ! -L "$HOME/.bin/${file_name}" ]; then
-        ln -s $file $BIN_FOLDER/$file_name
-    fi
-done
-
 # Rust scripts
 echo "Installing rust scripts"
 cargo install --path $DIR

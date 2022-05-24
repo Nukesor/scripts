@@ -1,3 +1,4 @@
+//! Pipewire (pw_dump) specific datastructures.
 use serde_derive::Deserialize;
 
 /// Representation of a Pipewire device

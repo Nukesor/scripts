@@ -10,6 +10,7 @@ path = "src/lib.rs"
 
 [dependencies]
 anyhow = "^1"
+comfy-table = "6.0.0-rc.1"
 better-panic = "^0.3"
 log = "0.4"
 simplelog = { version = "0.12", default-features = false }
