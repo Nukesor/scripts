@@ -1,5 +1,0 @@
-[build]
-rustflags = [
-    # Build for native CPU for max performance
-    "-C", "target-cpu=native",
-]
