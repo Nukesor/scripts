@@ -108,9 +108,9 @@ fn blur_image(
     let start = Instant::now();
 
     let (width, height) = image.dimensions();
-    // Get the channel count (bytes per pixel)
+    // Get the channel count (bytes per pixel).
     let channel_count = Rgb::<u8>::CHANNEL_COUNT as usize;
-    // Convert the image into its raw bytes
+    // Convert the image into its raw bytes.
     let mut source_bytes = image.into_raw();
 
     // Define the chunks based on the image width, bytes per pixel and scaling factor.
@@ -122,7 +122,6 @@ fn blur_image(
 
     // We need additional info about the image dimensions and specs in the worker threads.
     // That's why we also zip a vector of these specs into the actual data iterator.
-
     let specs = ImageSpecs {
         width: width as usize,
         channel_count,
@@ -188,7 +187,7 @@ fn blur_row_chunk(((source, target), specs): ((&mut [u8], &mut [u8]), &ImageSpec
     let middle_row_end = (middle + 1) * row_bytes;
 
     // Step 1:
-    // Create an iterate, iterating through each pixel chunk of the middle row.
+    // Create an iterator through each pixel chunk of the middle row.
     let mut middle_pixel_iter = source
         .get_mut(middle_row_start..middle_row_end)
         .expect("Chunk size smaller than expected")
@@ -210,7 +209,7 @@ fn blur_row_chunk(((source, target), specs): ((&mut [u8], &mut [u8]), &ImageSpec
     }
 
     // For the remainder of the row, we just take the first pixel instead of the middle.
-    // The remainder appears if we the width isn't devidable by our `scale` factor.
+    // The remainder appears if the width isn't devidable by our `scale` factor.
     let remainder = middle_pixel_iter.into_remainder();
     // Only copy stuff if there's more than pixel.
     if remainder.len() > channels {
@@ -221,6 +220,7 @@ fn blur_row_chunk(((source, target), specs): ((&mut [u8], &mut [u8]), &ImageSpec
     }
 
     // Step 2
+    // Copy the final row into all source rows of our chunk.
     let source_middle_row = source.get(middle_row_start..middle_row_end).unwrap();
     for row in target.chunks_mut(row_bytes) {
         row.clone_from_slice(source_middle_row);
