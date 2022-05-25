@@ -130,10 +130,10 @@ fn handle_running_game(
         debug!("Below threshold or not strict");
         // Calculate the current interval we're in.
         let current_interval = elapsed_minutes / args.notification_interval;
-        let time_string = format_duration(elapsed_minutes);
 
         // Send the user a notification if we're in a new interval.
         if running_game.notification_count < current_interval {
+            let time_string = format_duration(elapsed_minutes);
             info!("Sending normal notification for {name} at {time_string}");
             notify(
                 format!("You have been playing {name} for {time_string}"),
