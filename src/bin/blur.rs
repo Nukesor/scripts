@@ -1,14 +1,21 @@
 //! Create a blurred image from the current screen.
 //!
 //! 1. Get a current screenshot via scrot.
-//! 2. Run a custom pixel shader on the image data.
+//! 2. Run a custom point filter on the image data.
 //! 3. Save it.
-use std::{io::Cursor, path::PathBuf, time::Instant};
+use std::{
+    fs::File,
+    io::{BufWriter, Cursor},
+    path::PathBuf,
+    time::Instant,
+};
 
 use anyhow::{Context, Result};
 use clap::Parser;
 use image::{
-    io::Reader as ImageReader, DynamicImage, ImageBuffer, ImageFormat, Pixel, Rgb, RgbImage,
+    codecs::png::{CompressionType, FilterType, PngEncoder},
+    io::Reader as ImageReader,
+    DynamicImage, ImageBuffer, ImageEncoder, ImageFormat, Pixel, Rgb, RgbImage,
 };
 
 use log::debug;
@@ -49,9 +56,18 @@ fn main() -> Result<()> {
     // Blur the image.
     image = blur_image(args.scale, image)?;
 
-    // Save the image to the filesystem.
+    // Save the image as PNG to the filesystem.
+    // Sadly, i3lock only supports PNG for now.
     let start = Instant::now();
-    image.save(args.dest_path)?;
+    let buffered_file_write = &mut BufWriter::new(File::create(args.dest_path)?);
+    let (width, height) = image.dimensions();
+    PngEncoder::new_with_quality(
+        buffered_file_write,
+        CompressionType::Fast,
+        FilterType::NoFilter,
+    )
+    .write_image(&image.into_raw(), width, height, image::ColorType::Rgb8)
+    .context("Failed to save image to disk")?;
     debug!("Image write time: {}ms", start.elapsed().as_millis());
 
     Ok(())
@@ -60,7 +76,7 @@ fn main() -> Result<()> {
 /// Make a screenshot via scrot and capture the image (png) bytes.
 fn get_screenshot() -> Result<Vec<u8>> {
     let start = Instant::now();
-    let capture = Cmd::new("scrot --delay 0 --silent -").run_success()?;
+    let capture = Cmd::new("scrot --delay 0 --quality 95 --silent -").run_success()?;
     debug!("scrot execution time: {}ms", start.elapsed().as_millis());
 
     Ok(capture.stdout)
@@ -184,11 +200,11 @@ fn blur_row_chunk(((source, target), specs): ((&mut [u8], &mut [u8]), &ImageSpec
         .chunks_exact_mut(specs.scale * channels);
 
     // Calculate the indices for the middle pixel of each (full) pixel chunk.
-    let middel_pixel_start = (specs.scale / 2) * channels;
-    let middel_pixel_end = ((specs.scale / 2) + 1) * channels;
+    let middle_pixel_start = (specs.scale / 2) * channels;
+    let middle_pixel_end = ((specs.scale / 2) + 1) * channels;
     while let Some(chunk) = middle_pixel_iter.next() {
         let middle_pixel = chunk
-            .get_mut(middel_pixel_start..middel_pixel_end)
+            .get_mut(middle_pixel_start..middle_pixel_end)
             .expect("Wrong middle pixel indices")
             .to_owned();
 
