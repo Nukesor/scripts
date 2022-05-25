@@ -3,19 +3,14 @@
 //! 1. Get a current screenshot via scrot.
 //! 2. Run a custom point filter on the image data.
 //! 3. Save it.
-use std::{
-    fs::File,
-    io::{BufWriter, Cursor},
-    path::PathBuf,
-    time::Instant,
-};
+use std::{fs::File, io::BufWriter, path::PathBuf, time::Instant};
 
 use anyhow::{Context, Result};
 use clap::Parser;
 use image::{
     codecs::png::{CompressionType, FilterType, PngEncoder},
     io::Reader as ImageReader,
-    DynamicImage, ImageBuffer, ImageEncoder, ImageFormat, Pixel, Rgb, RgbImage,
+    DynamicImage, ImageBuffer, ImageEncoder, Pixel, Rgb, RgbImage,
 };
 
 use log::debug;
@@ -50,8 +45,8 @@ fn main() -> Result<()> {
     logging::init_logger(args.verbose);
 
     // Make screenshot and init the image.
-    let image_bytes = get_screenshot()?;
-    let mut image = load_image(image_bytes)?;
+    get_screenshot()?;
+    let mut image = load_image()?;
 
     // Blur the image.
     image = blur_image(args.scale, image)?;
@@ -74,19 +69,19 @@ fn main() -> Result<()> {
 }
 
 /// Make a screenshot via scrot and capture the image (png) bytes.
-fn get_screenshot() -> Result<Vec<u8>> {
+fn get_screenshot() -> Result<()> {
     let start = Instant::now();
-    let capture = Cmd::new("scrot --delay 0 --quality 95 --silent -").run_success()?;
+    Cmd::new("scrot --delay 0 --quality 95 --silent /tmp/blur-screenshot.jpg").run_success()?;
     debug!("scrot execution time: {}ms", start.elapsed().as_millis());
 
-    Ok(capture.stdout)
+    Ok(())
 }
 
 /// Initialize the image from the raw bytes.
-fn load_image(image_bytes: Vec<u8>) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>> {
+fn load_image() -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>> {
     let start = Instant::now();
 
-    let image = ImageReader::with_format(Cursor::new(image_bytes), ImageFormat::Png).decode()?;
+    let image = ImageReader::open("/tmp/blur-screenshot.jpg")?.decode()?;
     let image = match image {
         DynamicImage::ImageRgb8(image) => image,
         _ => bail!("Expected Rgb8 format from scrot"),
