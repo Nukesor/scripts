@@ -71,7 +71,7 @@ fn main() -> Result<()> {
 /// Make a screenshot via scrot and capture the image (png) bytes.
 fn get_screenshot() -> Result<()> {
     let start = Instant::now();
-    Cmd::new("scrot --delay 0 --quality 95 --silent /tmp/blur-screenshot.jpg").run_success()?;
+    Cmd::new("scrot --overwrite --delay 0 --quality 95 --silent /tmp/blur-screenshot.jpg").run_success()?;
     debug!("scrot execution time: {}ms", start.elapsed().as_millis());
 
     Ok(())
