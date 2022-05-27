@@ -1,7 +1,0 @@
-#!/bin/bash
-set -euo pipefail
-
-file=/tmp/i3lock-blur.png
-
-~/.cache/cargo/bin/blur 5 $file
-i3lock -e -i $file &

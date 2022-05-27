@@ -3,22 +3,25 @@
 //! 1. Get a current screenshot via scrot.
 //! 2. Run a custom point filter on the image data.
 //! 3. Save it.
-use std::{fs::File, io::BufWriter, path::PathBuf, time::Instant};
+use std::{
+    fs::remove_file,
+    io::Write,
+    process::{Command, Stdio},
+    time::Instant,
+};
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use image::{
-    codecs::png::{CompressionType, FilterType, PngEncoder},
-    io::Reader as ImageReader,
-    DynamicImage, ImageBuffer, ImageEncoder, Pixel, Rgb, RgbImage,
-};
-
+use image::{io::Reader as ImageReader, DynamicImage, ImageBuffer, Pixel, Rgb, RgbImage};
 use log::debug;
 use rayon::{
     iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator},
     slice::ParallelSliceMut,
 };
+
 use script_utils::{bail, logging, prelude::*};
+
+const SCREENSHOT_PATH: &str = "/tmp/blur-screenshot.jpg";
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -30,9 +33,6 @@ struct CliArguments {
     /// The scale we should blur to.
     /// I.e. `5` would result in a relative 20% downscale.
     pub scale: usize,
-
-    /// Where the screenshot file should be put.
-    pub dest_path: PathBuf,
 
     /// Verbose mode (-v, -vv, -vvv)
     #[clap(short, long, parse(from_occurrences))]
@@ -51,19 +51,35 @@ fn main() -> Result<()> {
     // Blur the image.
     image = blur_image(args.scale, image)?;
 
-    // Save the image as PNG to the filesystem.
-    // Sadly, i3lock only supports PNG for now.
     let start = Instant::now();
-    let buffered_file_write = &mut BufWriter::new(File::create(args.dest_path)?);
+    // Spawn i3lock directly from in here.
     let (width, height) = image.dimensions();
-    PngEncoder::new_with_quality(
-        buffered_file_write,
-        CompressionType::Fast,
-        FilterType::NoFilter,
-    )
-    .write_image(&image.into_raw(), width, height, image::ColorType::Rgb8)
-    .context("Failed to save image to disk")?;
-    debug!("Image write time: {}ms", start.elapsed().as_millis());
+    let mut child = Command::new("i3lock")
+        .arg("--show-failed-attempts")
+        .arg("--raw")
+        .arg(format!("{width}x{height}:rgb"))
+        .arg("--image")
+        .arg("/dev/stdin")
+        .env("DISPLAY", ":0")
+        .stdin(Stdio::piped())
+        .stderr(Stdio::inherit())
+        .stdout(Stdio::inherit())
+        .spawn()
+        .expect("failed to execute child");
+
+    // Send i3lock the image in raw form via stdin.
+    let mut stdin = child.stdin.take().context("Failed to get stdin handle.")?;
+    stdin
+        .write(&image.into_raw())
+        .context("Failed to send image to i3lock stdin")?;
+
+    debug!(
+        "I3lock spawn + image copy: {}ms",
+        start.elapsed().as_millis()
+    );
+
+    // i3lock instantly forks away on it's own, but we should still wait for it to do that.
+    let code = child.wait().context("Failed to wait for i3lock.")?;
 
     Ok(())
 }
@@ -71,7 +87,10 @@ fn main() -> Result<()> {
 /// Make a screenshot via scrot and capture the image (png) bytes.
 fn get_screenshot() -> Result<()> {
     let start = Instant::now();
-    Cmd::new("scrot --overwrite --delay 0 --quality 95 --silent /tmp/blur-screenshot.jpg").run_success()?;
+    Cmd::new(format!(
+        "scrot --overwrite --delay 0 --quality 95 --silent {SCREENSHOT_PATH}"
+    ))
+    .run_success()?;
     debug!("scrot execution time: {}ms", start.elapsed().as_millis());
 
     Ok(())
@@ -81,11 +100,12 @@ fn get_screenshot() -> Result<()> {
 fn load_image() -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>> {
     let start = Instant::now();
 
-    let image = ImageReader::open("/tmp/blur-screenshot.jpg")?.decode()?;
+    let image = ImageReader::open(SCREENSHOT_PATH)?.decode()?;
     let image = match image {
         DynamicImage::ImageRgb8(image) => image,
         _ => bail!("Expected Rgb8 format from scrot"),
     };
+    remove_file(SCREENSHOT_PATH).context("Failed to remove screenshot.")?;
 
     debug!("Image init time: {}ms", start.elapsed().as_millis());
     Ok(image)
