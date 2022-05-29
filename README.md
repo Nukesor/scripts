@@ -12,3 +12,23 @@ Run `./install.sh` to install all. This deploys:
 There're two hooks, which automatically deploy the project when pulling new commits.
 
 Great for syncing changes between multiple machines.
+
+## Screenlock
+
+Screenlock trigger on sleep via a `systemd` service looks like this:
+
+```
+[Unit]
+Description=Lock the screen
+Before=sleep.target
+
+[Service]
+User=%i
+Group=%i
+Type=forking
+Environment=DISPLAY=:0
+ExecStart=/home/%u/.cache/cargo/bin/blur 5 -vvv
+
+[Install]
+WantedBy=sleep.target
+```
