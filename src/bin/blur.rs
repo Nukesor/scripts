@@ -79,7 +79,7 @@ fn main() -> Result<()> {
     );
 
     // i3lock instantly forks away on it's own, but we should still wait for it to do that.
-    let code = child.wait().context("Failed to wait for i3lock.")?;
+    child.wait().context("Failed to wait for i3lock.")?;
 
     Ok(())
 }
@@ -216,6 +216,7 @@ fn blur_row_chunk(((source, target), specs): ((&mut [u8], &mut [u8]), &ImageSpec
     // Calculate the indices for the middle pixel of each (full) pixel chunk.
     let middle_pixel_start = (specs.scale / 2) * channels;
     let middle_pixel_end = ((specs.scale / 2) + 1) * channels;
+    #[allow(clippy::while_let_on_iterator)]
     while let Some(chunk) = middle_pixel_iter.next() {
         let middle_pixel = chunk
             .get_mut(middle_pixel_start..middle_pixel_end)
