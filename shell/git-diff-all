@@ -1,0 +1,17 @@
+#!/bin/zsh
+# Show colored output for changed **AND** untracked files.
+file=$1
+output=$(git diff --color $file 2>/dev/null)
+
+if [[ $output ]]; then
+    echo $output | diff-so-fancy
+elif [[ -f $file ]]; then
+    git diff --no-index /dev/null $file | diff-so-fancy
+else
+    # It's not easy to git diff a deleted file, as it doesn't have to be in-tree.
+    # That's why we copy the last revision (HEAD) to our XDG runtime dir
+    # so we can compare it with /dev/null.
+    temp_path=$XDG_RUNTIME_DIR/git-diff-all
+    git show HEAD:./$file > $temp_path
+    git diff --no-index $temp_path /dev/null | diff-so-fancy
+fi
