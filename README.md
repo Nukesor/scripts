@@ -27,7 +27,7 @@ User=%i
 Group=%i
 Type=forking
 Environment=DISPLAY=:0
-ExecStart=/home/%u/.cache/cargo/bin/blur 5 -vvv
+ExecStart=/home/%i/.cache/cargo/bin/blur 5 -vvv
 
 [Install]
 WantedBy=sleep.target
