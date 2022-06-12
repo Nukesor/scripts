@@ -1,7 +1,7 @@
 //! Get the output of the following command and sort them by execution time.
 //! ```sh
-//!     cargo +nightly test \
-//!         --features integration-test -- -q \
+//!     cargo +nightly test --
+//!         --quiet \
 //!         -Z unstable-options \
 //!         --format json \
 //!         --report-time > target/debug/test.json

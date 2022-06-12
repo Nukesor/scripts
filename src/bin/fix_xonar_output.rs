@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use anyhow::{Context, Result};
 
-use script_utils::pw_dump::*;
+use script_utils::schemas::pw_dump::*;
 use script_utils::{exec::Cmd, unwrap_or_continue};
 
 /// Run at startup and set the correct expected output for the Xonar audio card.
