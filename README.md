@@ -7,6 +7,12 @@ Run `./install.sh` to install all. This deploys:
 - Rust scripts to `$CARGO_HOME/bin/`
 - Shell scripts to `~/.bin/`
 
+## Dependencies
+
+- `scrot` for `bin/screenlock`
+- `iwconfig` for `bin/netinfo` (pkg: `wireless_tools`)
+- `pw-dump` for `bin/fix_xonar_output` and `bin/change_sink`
+
 ## Git Hooks
 
 There're two hooks, which automatically deploy the project when pulling new commits.
