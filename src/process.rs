@@ -5,8 +5,16 @@ use procfs::process::all_processes;
 pub fn get_process_cmdlines(current_user_id: u32) -> Result<Vec<String>> {
     let processes = all_processes()?
         .into_iter()
+        .filter_map(|process| process.ok())
         // We're only interested in alive processes that belong to the current user.
-        .filter(|process| process.is_alive() && process.owner == current_user_id)
+        .filter(|process| {
+            let uid = if let Ok(uid) = process.uid() {
+                uid
+            } else {
+                return false;
+            };
+            process.is_alive() && uid == current_user_id
+        })
         .filter_map(|process| {
             // Don't include the process if we cannot get the cmdline.
             if let Ok(cmdline) = process.cmdline() {
