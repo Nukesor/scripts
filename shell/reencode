@@ -18,7 +18,7 @@ nice -n 15 ffmpeg \
     -map 0:a:0 \
     -sn \
     -dn \
-    -c:a libfdk_aac \
+    -c:a aac \
     -b:a 128k \
     -c:v libx265 \
     -preset slower \
