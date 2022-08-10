@@ -2,6 +2,6 @@
 
 borg create --stats root@jarvis:/var/lib/backup/borg/documents::$(date -I) ~/Dokumente
 borg create --stats root@jarvis:/var/lib/backup/borg/images::$(date -I) ~/Syncthing/Bilder
-if [[ -d "$HOME/music" ]]; then
+if [[ "bomb" == $(hostname) ]]; then
     borg create --stats root@jarvis:/var/lib/backup/borg/music::$(date -I) ~/music
 fi
