@@ -17,7 +17,7 @@ fn main() -> Result<()> {
 
 /// Remove all invalid characters and substrings from directories in the given directory.
 fn rename_directories(path: PathBuf) -> Result<()> {
-    let dirs = read_dir_or_fail(path, Some(FileType::Directory))?;
+    let dirs = read_dir_or_fail(&path, Some(FileType::Directory))?;
 
     for dir in dirs {
         let path = dir.path();

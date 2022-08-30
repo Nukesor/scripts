@@ -51,7 +51,7 @@ pub mod file {
 
     /// Read all entries of a directory and return them.
     /// If a FileType is specified, only files with that type will be returned.
-    pub fn read_dir_or_fail(path: PathBuf, file_type: Option<FileType>) -> Result<Vec<DirEntry>> {
+    pub fn read_dir_or_fail(path: &PathBuf, file_type: Option<FileType>) -> Result<Vec<DirEntry>> {
         let dir = std::fs::read_dir(path)?;
 
         let mut entries: Vec<DirEntry> = Vec::new();
