@@ -58,6 +58,11 @@ fn main() -> Result<()> {
         let name = interface.ifname;
         let ip_addr = &addr.local;
 
+        // Drop any container/virtual environment related networks
+        if name.starts_with("docker") || name.starts_with("veth") || name.starts_with("br") {
+            continue;
+        }
+
         // Determine the network type based on the name of the interface.
         let network_type = if name.starts_with('e') {
             NetworkType::Ethernet
