@@ -1,0 +1,26 @@
+#!/bin/bash
+# Set the brightness of the display.
+
+mkdir -p "/tmp/$USER"
+volume_path="/tmp/$USER/previous_volume"
+
+# Find the correct backlight device ( if one exists )
+if [ "$1" == "up" ]; then
+    pactl set-sink-volume @DEFAULT_SINK@ +2%
+elif [ "$1" == "down" ]; then
+    pactl set-sink-volume @DEFAULT_SINK@ -2%
+elif [ "$1" == "toggle_mute" ]; then
+    volume=$(pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[^ ]*%' | head -n 1)
+
+    # We're currently at 0% volume. Try to unmute
+    if [[ "0%" == "$volume" ]]; then
+        # Check if we saved the previous volume to a file. If so, we restore that volume.
+        if [[ -f "$volume_path" ]]; then
+            pactl set-sink-volume @DEFAULT_SINK@ "$(cat $volume_path)"
+        fi
+    else
+        # We aren't muted. Set the volume to 0, but save it for later use.
+        echo "$volume" > "$volume_path"
+        pactl set-sink-volume @DEFAULT_SINK@ 0
+    fi
+fi
