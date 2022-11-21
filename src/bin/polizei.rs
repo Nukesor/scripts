@@ -94,7 +94,7 @@ fn main() -> Result<()> {
 
                 info!("Found running game {name}");
                 found_games.insert(name);
-                handle_running_game(&args, &mut running_games, *name, *strict)?;
+                handle_running_game(&args, &mut running_games, name, *strict)?;
                 break;
             }
         }
