@@ -19,10 +19,10 @@ pub fn get_process_cmdlines(current_user_id: u32) -> Result<Vec<String>> {
             // Don't include the process if we cannot get the cmdline.
             if let Ok(cmdline) = process.cmdline() {
                 // Only get the first few strings which should include the name of the game.
-                if cmdline.len() < 5 {
+                if cmdline.len() < 6 {
                     Some(cmdline.join(" "))
                 } else {
-                    let (left, _) = cmdline.split_at(4);
+                    let (left, _) = cmdline.split_at(5);
                     Some(left.join(" "))
                 }
             } else {

@@ -45,7 +45,7 @@ const GAME_LIST: &[(&str, &str, bool)] = &[
     ("Terraria", "terraria", false),
     ("Necesse", "necesse", true),
     ("some game", "streaming_client", true),
-    ("ATLauncher.jar", "Minecraft", true),
+    ("Minecraft", "atlauncher.jar", true),
 ];
 
 struct RunningGame {
@@ -87,6 +87,7 @@ fn main() -> Result<()> {
         let mut found_games: HashSet<&'static str> = HashSet::new();
         // Check all processes for the specified binaries.
         for cmdline in processes {
+            debug!("Looking at process: {cmdline}");
             for (name, binary, strict) in GAME_LIST {
                 // The cmdline doesn't contain the game just exit early.
                 if !cmdline.to_lowercase().contains(binary) {
