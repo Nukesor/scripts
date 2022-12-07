@@ -5,7 +5,7 @@ use std::time::Duration;
 use anyhow::{Context, Result};
 
 use script_utils::schemas::pw_dump::*;
-use script_utils::{exec::Cmd, unwrap_or_continue};
+use script_utils::{exec::Cmd, some_or_continue};
 
 /// Run at startup and set the correct expected output for the Xonar audio card.
 fn main() -> Result<()> {
@@ -43,16 +43,16 @@ fn set_xonar_output() -> Result<bool> {
     let devices: Vec<Device> = serde_json::from_str(&capture.stdout_str())
         .context("Failed to deserialize pw-dump output.")?;
     for device in devices {
-        let info = unwrap_or_continue!(device.info);
-        let props = unwrap_or_continue!(info.props);
+        let info = some_or_continue!(device.info);
+        let props = some_or_continue!(info.props);
 
         // Ignore any cards that aren't the Xonar card.
-        let name = unwrap_or_continue!(props.api_alsa_card_name);
+        let name = some_or_continue!(props.api_alsa_card_name);
         if name != "Xonar STX II" {
             continue;
         }
 
-        let card_id = unwrap_or_continue!(props.api_alsa_card);
+        let card_id = some_or_continue!(props.api_alsa_card);
         // Set the correct output.
         Cmd::new(format!("amixer -c {card_id} cset numid=22 'Headphones'"))
             .run_success()

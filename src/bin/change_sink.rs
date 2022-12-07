@@ -5,8 +5,10 @@
 use anyhow::Result;
 use clap::{ArgEnum, Parser};
 
+use log::{debug, warn};
+use script_utils::logging;
 use script_utils::schemas::pw_dump::*;
-use script_utils::{exec::Cmd, unwrap_or_continue};
+use script_utils::{exec::Cmd, some_or_continue};
 use strum_macros::Display;
 
 #[derive(Parser, Debug)]
@@ -16,6 +18,10 @@ use strum_macros::Display;
     author = "Arne Beer <contact@arne.beer>"
 )]
 struct CliArguments {
+    /// Verbose mode (-v, -vv, -vvv)
+    #[clap(short, long, parse(from_occurrences))]
+    pub verbose: u8,
+
     /// The audio sink that should be switched to.
     #[clap(arg_enum)]
     pub target: Target,
@@ -37,10 +43,12 @@ fn main() -> Result<()> {
     let capture = Cmd::new("pw-dump").run_success()?;
     let devices: Vec<Device> = serde_json::from_str(&capture.stdout_str())?;
 
+    logging::init_logger(args.verbose);
+
     // Run through all devices and find the one we desire.
     for device in devices {
-        let info = unwrap_or_continue!(device.info);
-        let props = unwrap_or_continue!(info.props);
+        let info = some_or_continue!(device.info);
+        let props = some_or_continue!(info.props);
         let device_id = props.object_serial;
         // We are only interested in Audio/Sink type devices.
         match props.media_class {
@@ -52,8 +60,8 @@ fn main() -> Result<()> {
             }
         }
 
-        let description = unwrap_or_continue!(props.node_description);
-        //println!("Device {device_id}: {description}");
+        let description = some_or_continue!(props.node_description);
+        debug!("Found device {device_id}: {description}");
 
         // Check if we find a device for the given name.
         let device_found = match args.target {
@@ -85,10 +93,13 @@ fn main() -> Result<()> {
             .filter_map(|line| line.split('\t').next().map(|id| id.to_string()))
             .collect();
 
-        //println!("{input_ids:?}");
+        debug!("Input Ids: {input_ids:?}");
 
         for id in input_ids {
-            Cmd::new(format!("pactl move-sink-input {id} {device_id}")).run_success()?;
+            let result = Cmd::new(format!("pactl move-sink-input {id} {device_id}")).run_success();
+            if let Err(err) = result {
+                warn!("Failed to switch input {id} to new sink: {err:?}");
+            };
         }
 
         Cmd::new(format!(

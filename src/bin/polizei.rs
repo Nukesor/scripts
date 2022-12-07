@@ -45,6 +45,7 @@ const GAME_LIST: &[(&str, &str, bool)] = &[
     ("Terraria", "terraria", false),
     ("Necesse", "necesse", true),
     ("some game", "streaming_client", true),
+    ("ATLauncher.jar", "Minecraft", true),
 ];
 
 struct RunningGame {

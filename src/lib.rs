@@ -19,7 +19,7 @@ pub fn setup() {
 }
 
 #[macro_export]
-macro_rules! unwrap_or_continue {
+macro_rules! some_or_continue {
     ($res:expr) => {
         match $res {
             Some(val) => val,
