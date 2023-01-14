@@ -15,7 +15,7 @@ lto = "thin"
 anyhow = "^1"
 better-panic = "^0.3"
 chrono = "^0.4.20-rc.1"
-clap = { version = "3", features = ["derive"] }
+clap = { version = "4", features = ["derive"] }
 comfy-table = "6.0.0-rc.1"
 crossterm = "0.25"
 image = { version = "0.24", features = [

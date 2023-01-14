@@ -3,7 +3,7 @@
 //!
 //! This is currently used by me via shortcuts.
 use anyhow::Result;
-use clap::{ArgEnum, Parser};
+use clap::{ArgAction, Parser, ValueEnum};
 
 use log::{debug, warn};
 use script_utils::logging;
@@ -19,15 +19,15 @@ use strum_macros::Display;
 )]
 struct CliArguments {
     /// Verbose mode (-v, -vv, -vvv)
-    #[clap(short, long, parse(from_occurrences))]
+    #[clap(short, long, action = ArgAction::Count)]
     pub verbose: u8,
 
     /// The audio sink that should be switched to.
-    #[clap(arg_enum)]
+    #[clap(value_enum)]
     pub target: Target,
 }
 
-#[derive(Parser, ArgEnum, Display, Copy, Clone, Debug)]
+#[derive(Parser, ValueEnum, Display, Copy, Clone, Debug)]
 enum Target {
     Hdmi,
     BuiltIn,

@@ -6,7 +6,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use clap::Parser;
+use clap::{ArgAction, Parser};
 
 use log::{debug, info};
 use script_utils::{logging, prelude::*};
@@ -20,7 +20,7 @@ use tera::{Context as TeraContext, Tera};
 )]
 struct CliArguments {
     /// Verbose mode (-v, -vv, -vvv)
-    #[clap(short, long, parse(from_occurrences))]
+    #[clap(short, long, action = ArgAction::Count)]
     pub verbose: u8,
 
     /// The path to the template.

@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use anyhow::{Context, Result};
 use chrono::{DateTime, Local};
-use clap::Parser;
+use clap::{ArgAction, Parser};
 
 use log::{debug, info};
 use script_utils::{logging, prelude::*, process::get_process_cmdlines};
@@ -15,7 +15,7 @@ use script_utils::{logging, prelude::*, process::get_process_cmdlines};
 )]
 pub struct CliArguments {
     /// Verbose mode (-v, -vv, -vvv)
-    #[clap(short, long, parse(from_occurrences))]
+    #[clap(short, long, action = ArgAction::Count)]
     pub verbose: u8,
 
     /// The interval (in minutes) at which the user will be notified that they've
@@ -46,6 +46,7 @@ const GAME_LIST: &[(&str, &str, bool)] = &[
     ("Necesse", "necesse", true),
     ("some game", "streaming_client", true),
     ("Minecraft", "atlauncher.jar", true),
+    ("Zero Sievert", "zero sievert.exe", true),
 ];
 
 struct RunningGame {

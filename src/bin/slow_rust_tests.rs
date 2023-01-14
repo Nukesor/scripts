@@ -9,7 +9,7 @@
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
-use clap::Parser;
+use clap::{ArgAction, Parser};
 use comfy_table::Table;
 use serde_derive::Deserialize;
 
@@ -75,7 +75,7 @@ pub struct CliArguments {
     pub path: PathBuf,
 
     /// Verbose mode (-v, -vv, -vvv)
-    #[clap(short, long, parse(from_occurrences))]
+    #[clap(short, long, action = ArgAction::Count)]
     pub verbose: u8,
 
     /// Any tests below this value in 'ms' won't be shown in the resulting table.

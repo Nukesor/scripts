@@ -11,7 +11,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use clap::Parser;
+use clap::{ArgAction, Parser};
 use image::{io::Reader as ImageReader, DynamicImage, ImageBuffer, Pixel, Rgb, RgbImage};
 use log::debug;
 use rayon::{
@@ -35,7 +35,7 @@ struct CliArguments {
     pub scale: usize,
 
     /// Verbose mode (-v, -vv, -vvv)
-    #[clap(short, long, parse(from_occurrences))]
+    #[clap(short, long, action = ArgAction::Count)]
     pub verbose: u8,
 }
 
