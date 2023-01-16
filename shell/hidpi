@@ -1,0 +1,2 @@
+echo "Xft.dpi: 160" > ~/.Xresources
+sudo systemctl restart lightdm
