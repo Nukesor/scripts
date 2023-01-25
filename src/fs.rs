@@ -38,7 +38,7 @@ pub mod file {
 
     /// Read the contents of a file.
     pub fn read_file(path: &PathBuf) -> Result<String> {
-        read_to_string(path).context(format!("Failed to read file {:?}", path))
+        read_to_string(path).context(format!("Failed to read file {path:?}"))
     }
 
     /// Read the contents of a file.
@@ -46,7 +46,7 @@ pub mod file {
         strings.sort();
         strings.retain(|name| !name.trim().is_empty());
         std::fs::write(path, strings.join("\n"))
-            .context(format!("Failed to write to file {:?}", path))
+            .context(format!("Failed to write to file {path:?}"))
     }
 
     /// Read all entries of a directory and return them.

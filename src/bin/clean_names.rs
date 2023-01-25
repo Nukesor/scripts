@@ -23,10 +23,10 @@ fn rename_directories(path: PathBuf) -> Result<()> {
         let path = dir.path();
         let filename = path
             .file_name()
-            .ok_or_else(|| anyhow!(format!("Couldn't get filename from path: {:?}", path)))?;
+            .ok_or_else(|| anyhow!(format!("Couldn't get filename from path: {path:?}")))?;
         let filename = filename
             .to_str()
-            .ok_or_else(|| anyhow!(format!("Filename contains invalid utf8: {:?}", filename)))?;
+            .ok_or_else(|| anyhow!(format!("Filename contains invalid utf8: {filename:?}")))?;
 
         let mut chars: Vec<char> = filename.chars().collect();
         // Check for each brace, if there is are matching pairs of braces in the path.
@@ -99,10 +99,7 @@ fn rename_directories(path: PathBuf) -> Result<()> {
         let mut new_path = path.clone();
         new_path.set_file_name(&new_name);
 
-        println!(
-            "Moving a) to b):\na) '{:?}'\nb) '{:?}'\n",
-            filename, new_name
-        );
+        println!("Moving a) to b):\na) '{filename:?}'\nb) '{new_name:?}'\n");
         std::fs::rename(path, new_path)?;
     }
 

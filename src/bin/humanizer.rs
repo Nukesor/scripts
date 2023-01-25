@@ -66,9 +66,9 @@ pub fn format_time(time: Time) {
 
     let mut formatted = String::new();
     if days > 0 {
-        formatted.push_str(&format!("{} days ", days));
+        formatted.push_str(&format!("{days} days "));
     }
-    formatted.push_str(&format!("{:02}:{:02}:{:02}", hours, minutes, seconds));
+    formatted.push_str(&format!("{hours:02}:{minutes:02}:{seconds:02}"));
 
-    print!("{}", formatted);
+    print!("{formatted}");
 }
