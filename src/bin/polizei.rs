@@ -141,7 +141,7 @@ fn handle_running_game(
             info!("Sending normal notification for {name} at {time_string}");
             notify(
                 format!("You have been playing {name} for {time_string}"),
-                30 * 1000,
+                10 * 1000,
                 false,
             )?;
         }
