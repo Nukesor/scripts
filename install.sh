@@ -22,6 +22,8 @@ for file in $DIR/shell/* ; do
     fi
 done
 
+rustup update stable
+
 # Rust scripts
 echo "Installing rust scripts"
 cargo install --path $DIR
