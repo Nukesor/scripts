@@ -5,11 +5,17 @@ use std::{fs::read_to_string, path::PathBuf, str::Lines};
 use anyhow::Result;
 use clap::Parser;
 use script_utils::Context;
+use serde_derive::Serialize;
 
 #[derive(Parser, Debug)]
 pub struct CliArguments {
     /// The path to the todo markdown file.
     pub path: PathBuf,
+}
+
+#[derive(Serialize, Debug)]
+pub struct I3StatusCustom {
+    text: String,
 }
 
 /// Simply read a file and print a few lines of output
@@ -35,11 +41,12 @@ fn main() -> Result<()> {
     }
 
     if output.trim().is_empty() {
-        println!("Nothing to do :) |");
-        return Ok(());
+        output = "Nothing to do :)".to_string();
     }
 
-    println!("{output} |");
+    // Send the expected json output to i3status
+    let output = I3StatusCustom { text: output };
+    println!("{}", serde_json::to_string(&output)?);
 
     Ok(())
 }
