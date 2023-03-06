@@ -1,5 +1,6 @@
 //! A convenience wrapper to quickly apply a variable file to a tera template.
 use std::{
+    collections::HashMap,
     fs::File,
     io::{BufReader, Write},
     path::PathBuf,
@@ -10,6 +11,7 @@ use clap::{ArgAction, Parser};
 
 use log::{debug, info};
 use script_utils::{logging, prelude::*};
+use serde_yaml::Value;
 use tera::{Context as TeraContext, Tera};
 
 #[derive(Parser, Debug)]
@@ -27,7 +29,8 @@ struct CliArguments {
     pub template: PathBuf,
 
     /// The path to the variable file (YAML for now).
-    pub variables: PathBuf,
+    /// Files that're passed later may overwrite earlier variables.
+    pub variables: Vec<PathBuf>,
 
     /// Where the output should be written to.
     pub output: PathBuf,
@@ -61,23 +64,29 @@ fn main() -> Result<()> {
 }
 
 fn create_context(args: &CliArguments) -> Result<TeraContext> {
-    // Open the file in read-only mode with buffer.
-    let file = File::open(&args.variables).context(format!(
-        "Failed to open template file at: {:?}",
-        &args.variables
-    ))?;
-    let reader = BufReader::new(file);
+    let mut all_variables: HashMap<String, Value> = HashMap::new();
 
-    // Convert the yaml represention to a json representation, as the Tera Context can directly
-    let variables: serde_json::Value = serde_yaml::from_reader(reader).context(format!(
-        "Failed to read template file at: {:?}",
-        &args.variables
-    ))?;
+    for file in args.variables.iter() {
+        // Open the file in read-only mode with buffer.
+        let file = File::open(file).context(format!(
+            "Failed to open template file at: {:?}",
+            &args.variables
+        ))?;
+        let reader = BufReader::new(&file);
 
-    debug!("Variables: {:?}", &variables);
+        // Convert the yaml represention to a json representation, as the Tera Context can directly
+        let variables: HashMap<String, Value> = serde_yaml::from_reader(reader)
+            .context(format!("Failed to read template file at: {file:?}"))?;
 
-    // work with those.
-    let context = TeraContext::from_value(variables).context("Failed to build tera context.")?;
+        variables.into_iter().for_each(|(key, value)| {
+            all_variables.insert(key, value);
+        });
+    }
+
+    debug!("Variables: {:?}", &all_variables);
+
+    let context =
+        TeraContext::from_serialize(all_variables).context("Failed to build tera context.")?;
 
     Ok(context)
 }
