@@ -61,21 +61,19 @@ fn handle_todo_items(headline: &str, lines: &mut Lines, output: &mut String) -> 
         output.push_str(headline.trim());
     }
 
-    let mut items = 0;
-    let mut completed_items = 0;
+    let mut items: usize = 0;
+    let mut completed_items: usize = 0;
     for line in lines {
         // We found the next todo. Abort.
         if line.starts_with('#') {
             // Add the current item counter and a comma for todo separation.
-            if items > 0 {
-                output.push_str(&format!(" ({completed_items}/{items})"))
-            }
+            add_item_count(output, items, completed_items);
             output.push_str(", ");
             return Some(line.to_string());
         }
 
         // We found an unfinished item
-        if line.trim().starts_with("- [ ]") || line.trim().starts_with("- []") {
+        if line.trim().starts_with("-") && !line.trim().starts_with("- [x]") {
             items += 1;
             continue;
         }
@@ -87,10 +85,16 @@ fn handle_todo_items(headline: &str, lines: &mut Lines, output: &mut String) -> 
         }
     }
 
-    // Add the current item counter.
-    if items > 0 {
-        output.push_str(&format!(" ({completed_items}/{items})"))
-    }
+    add_item_count(output, items, completed_items);
 
     None
+}
+
+/// Add an item counter, depending on the item counts.
+fn add_item_count(output: &mut String, total: usize, completed: usize) {
+    if completed > 0 {
+        output.push_str(&format!(" ({completed}/{total})"))
+    } else if total > 0 {
+        output.push_str(&format!(" ({total})"))
+    }
 }
