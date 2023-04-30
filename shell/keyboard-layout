@@ -13,6 +13,8 @@ elif [ "$1" == "en" ]; then
     xmodmap -e "keycode 38 = a A adiaeresis Adiaeresis adiaeresis Adiaeresis"
     xmodmap -e "keycode 40 = d D odiaeresis Odiaeresis odiaeresis Odiaeresis"
     xmodmap -e "keycode 41 = f F udiaeresis Udiaeresis udiaeresis Udiaeresis"
+    xmodmap -e "keycode 32 = o O Greek_omega Greek_OMEGA Greek_omega Greek_OMEGA"
+
 
     mkdir -p "/tmp/$USER"
     echo 'en' > "/tmp/$USER/keyboard_layout"
