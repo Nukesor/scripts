@@ -15,9 +15,7 @@ BIN_FOLDER="/usr/local/bin"
 echo "Deploying shell scripts"
 for file in $DIR/shell/* ; do
     file_name=$(basename $file)
-    if [ ! -L "$HOME/.bin/${file_name}" ]; then
-        sudo ln -f -s $file $BIN_FOLDER/$file_name
-    fi
+    sudo ln -f -s $file $BIN_FOLDER/$file_name
 done
 
 # Rust scripts
