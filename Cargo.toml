@@ -24,7 +24,7 @@ image = { version = "0.24", features = [
 ], default-features = false }
 itertools = "0.10"
 log = "0.4"
-procfs = { version = "0.14", default-features = false }
+procfs = { version = "0.15", default-features = false }
 rayon = "1"
 regex = "1"
 serde = "1"
