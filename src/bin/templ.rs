@@ -7,6 +7,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
+use chrono::{Datelike, Duration};
 use clap::{ArgAction, Parser};
 
 use log::{debug, info};
@@ -64,7 +65,7 @@ fn main() -> Result<()> {
 }
 
 fn create_context(args: &CliArguments) -> Result<TeraContext> {
-    let mut all_variables: HashMap<String, Value> = HashMap::new();
+    let mut context = get_default_context()?;
 
     for file in args.variables.iter() {
         // Open the file in read-only mode with buffer.
@@ -79,14 +80,60 @@ fn create_context(args: &CliArguments) -> Result<TeraContext> {
             .context(format!("Failed to read template file at: {file:?}"))?;
 
         variables.into_iter().for_each(|(key, value)| {
-            all_variables.insert(key, value);
+            context.insert(key, value);
         });
     }
 
-    debug!("Variables: {:?}", &all_variables);
+    let context = TeraContext::from_serialize(context).context("Failed to build tera context.")?;
 
-    let context =
-        TeraContext::from_serialize(all_variables).context("Failed to build tera context.")?;
+    debug!("Variables: {:#?}", &context);
+
+    Ok(context)
+}
+
+/// Build a default context for various circumstances
+fn get_default_context() -> Result<HashMap<String, Value>> {
+    let mut context: HashMap<String, Value> = HashMap::new();
+    let today = chrono::Local::now();
+    let start_of_month = today - Duration::days(today.day0().into());
+    let day_in_last_month = start_of_month - Duration::days(10);
+
+    // Add german values related to the current date.
+    let mut de: HashMap<String, Value> = HashMap::new();
+    let german_months = [
+        "Januar",
+        "Februar",
+        "März",
+        "April",
+        "Mai",
+        "Juni",
+        "Juli",
+        "August",
+        "September",
+        "Oktober",
+        "November",
+        "Dezember",
+    ];
+    de.insert(
+        "current_month".into(),
+        serde_yaml::to_value(german_months[start_of_month.month0() as usize]).unwrap(),
+    );
+    de.insert(
+        "year_of_current_month".into(),
+        serde_yaml::to_value(start_of_month.year()).unwrap(),
+    );
+    de.insert(
+        "last_month".into(),
+        serde_yaml::to_value(german_months[day_in_last_month.month0() as usize]).unwrap(),
+    );
+    de.insert(
+        "year_of_last_month".into(),
+        serde_yaml::to_value(day_in_last_month.year()).unwrap(),
+    );
+    context.insert(
+        "de".into(),
+        serde_yaml::to_value(de).context("Couldn't serialize default values")?,
+    );
 
     Ok(context)
 }
