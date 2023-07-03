@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [ "$1" == "de" ]; then
-    setxkbmap -layout de -option caps:escape -option lv3:ralt_switch -option altwin:swap_lalt_lwin
+    setxkbmap -layout de -option caps:escape
 
     mkdir -p "/tmp/$USER"
     echo 'de' > "/tmp/$USER/keyboard_layout"
