@@ -121,7 +121,7 @@ fn handle_running_game(
     name: &'static str,
     strict: bool,
 ) -> Result<()> {
-    let mut running_game = running_games.entry(name).or_default();
+    let running_game = running_games.entry(name).or_default();
     let now = Local::now();
 
     // Calculate the amount of minutes since we first saw that game running.

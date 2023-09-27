@@ -73,7 +73,7 @@ fn handle_todo_items(headline: &str, lines: &mut Lines, output: &mut String) -> 
         }
 
         // We found an unfinished item
-        if line.trim().starts_with("-") && !line.trim().starts_with("- [x]") {
+        if line.trim().starts_with('-') && !line.trim().starts_with("- [x]") {
             items += 1;
             continue;
         }

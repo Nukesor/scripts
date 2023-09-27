@@ -4,7 +4,6 @@ use procfs::process::all_processes;
 /// Get all cmdlines of currently running processes.
 pub fn get_process_cmdlines(current_user_id: u32) -> Result<Vec<String>> {
     let processes = all_processes()?
-        .into_iter()
         .filter_map(|process| process.ok())
         // We're only interested in alive processes that belong to the current user.
         .filter(|process| {
