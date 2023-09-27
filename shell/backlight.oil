@@ -1,0 +1,50 @@
+#!/usr/bin/env ysh
+# Set the brightness of the display.
+
+# Find the correct backlight device ( if one exists )
+
+for directory in /sys/class/backlight/* {
+    backlight_path=$directory
+}
+
+if ! test -d "$backlight_path" {
+    echo "No backlight found"
+    exit 0
+}
+
+var brightness_path = "$backlight_path/brightness"
+var max_bright = $(cat "$backlight_path/max_brightness")
+var current = $(cat $brightness_path)
+
+proc set_brightness(path, value) {
+    echo $path
+    sudo tee "$path" <<< "$value"
+}
+
+# Adjust the backlight in 1% steps.
+var step = max_bright / 100
+
+if ( "$1" === "up" ) {
+    # Increase the brightness
+    var new = current + step
+    set_brightness $backlight_path $new
+} elif ( "$1" === "down" ) {
+    # Decrease the brightness
+    var new = current - step
+
+    # Don't set a brightness lower than 1
+    if ( new < 0 ) {
+        var new = 1
+    }
+
+    set_brightness $backlight_path $new
+} elif ( "$1" === "normal" ) {
+    # Go to 50% backlight as a default.
+    var new = max_bright / 2
+    set_brightness $backlight_path $new
+} elif ( "$1" === "max" ) {
+    set_brightness $backlight_path $max_bright
+
+} else {
+    echo "Unknown command $1"
+}
