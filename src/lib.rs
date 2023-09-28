@@ -1,7 +1,9 @@
 pub mod exec;
 pub mod fs;
 pub mod logging;
+pub mod notify;
 pub mod process;
+pub mod ring;
 pub mod schemas;
 
 pub use anyhow::{anyhow, bail, Context, Result};

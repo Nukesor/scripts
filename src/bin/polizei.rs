@@ -1,11 +1,11 @@
 use std::collections::{HashMap, HashSet};
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use chrono::{DateTime, Local};
 use clap::{ArgAction, Parser};
 
 use log::{debug, info};
-use script_utils::{logging, prelude::*, process::get_process_cmdlines};
+use script_utils::{logging, notify::*, process::get_process_cmdlines};
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -140,9 +140,8 @@ fn handle_running_game(
             let time_string = format_duration(elapsed_minutes);
             info!("Sending normal notification for {name} at {time_string}");
             notify(
-                format!("You have been playing {name} for {time_string}"),
                 10 * 1000,
-                false,
+                format!("You have been playing {name} for {time_string}"),
             )?;
         }
         running_game.notification_count = current_interval;
@@ -164,24 +163,12 @@ fn handle_running_game(
         let time_string = format_duration(elapsed_minutes);
 
         info!("Sending stop notification for {name} at {time_string}");
-        notify(
-            format!("Stop playing {name}. You are at it since {time_string}"),
+        critical_notify(
             300 * 1000,
-            true,
+            format!("Stop playing {name}. You are at it since {time_string}"),
         )?;
         running_game.stop_notification_count = current_interval;
     }
-
-    Ok(())
-}
-
-fn notify(text: String, timeout: usize, critical: bool) -> Result<()> {
-    let critical = if critical { "--urgency critical" } else { "" };
-    Cmd::new(format!(
-        "notify-send --expire-time={timeout} '{text}' {critical}",
-    ))
-    .run_success()
-    .context("Failed to send notification.")?;
 
     Ok(())
 }

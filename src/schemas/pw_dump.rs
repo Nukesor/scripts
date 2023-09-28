@@ -2,7 +2,7 @@
 use serde_derive::Deserialize;
 
 /// Representation of a Pipewire device
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Device {
     pub id: usize,
     pub info: Option<Info>,
@@ -13,7 +13,7 @@ pub struct Device {
 }
 
 /// Detailed info about a device
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Info {
     pub props: Option<Props>,
     pub error: Option<String>,
@@ -32,7 +32,7 @@ pub struct Info {
     //pub state: "suspended",
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Props {
     #[serde(rename = "media.class")]
     pub media_class: Option<String>,
@@ -54,8 +54,8 @@ pub struct Props {
     //object_path: "v4l2:/dev/video2",
     //#[serde(rename="device.api")]
     //device_api: "v4l2",
-    //#[serde(rename="node.name")]
-    //node_name: "v4l2_input_pci-0000_00_14_0-usb-0_8_1_0",
+    #[serde(rename = "node.name")]
+    pub node_name: Option<String>,
     //#[serde(rename="factory.name")]
     //factory_name: "api_v4l2_source",
     //#[serde(rename="node.pause-on-idle")]
