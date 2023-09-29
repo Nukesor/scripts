@@ -115,21 +115,20 @@ fn install_package(aur: bool, name: &str) -> Result<InstallResult> {
     let manager = if aur { "paru" } else { "pacman" };
     let sudo = if aur { "" } else { "sudo " };
 
-    // Check if the package is already installed
+    // Check if the package is already installed.
+    // If so, return early.
     let capture = Cmd::new(format!("{sudo}{manager} -Qi {name}")).run()?;
-    let is_installed = capture.success();
-
-    if !is_installed {
-        let capture = Cmd::new(format!("{sudo}{manager} -S {name} --noconfirm --needed")).run()?;
-
-        if !capture.exit_status.success() {
-            return Ok(InstallResult::Failed(capture.stdout_str()));
-        } else {
-            return Ok(InstallResult::Success);
-        }
+    if capture.success() {
+        return Ok(InstallResult::Installed);
     }
 
-    Ok(InstallResult::Installed)
+    // Install the program
+    let capture = Cmd::new(format!("{sudo}{manager} -S {name} --noconfirm --needed")).run()?;
+    if !capture.exit_status.success() {
+        Ok(InstallResult::Failed(capture.stdout_str()))
+    } else {
+        Ok(InstallResult::Success)
+    }
 }
 
 fn add_to_list(list: &mut Vec<String>, name: &str) -> bool {

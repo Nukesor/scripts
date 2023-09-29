@@ -141,15 +141,14 @@ mod test {
     use super::*;
 
     #[test]
-    fn simple_test() -> Result<()> {
+    fn test_directory_cleanup() -> Result<()> {
         // Create test directory.
         let parent_dir = Path::new("/tmp/clean_names_test_dir");
         create_dir(parent_dir)?;
 
         // Create a directory whose name should be cleaned.
-        let inner_dir = Path::new(
-            "/tmp/clean_names_test_dir/  [this is some_test] Name that should stay;(and some) {more random} (stuff)",
-        );
+        let inner_dir = parent_dir
+            .join("  [this is some_test] Name that should stay;(and some) {more random} (stuff)");
         create_dir(inner_dir)?;
 
         // Clean directory name and ensure it looks as expected.

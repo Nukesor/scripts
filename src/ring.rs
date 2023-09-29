@@ -18,6 +18,7 @@ impl<T> Ring<T> {
     }
 
     /// Move the cursor to the next element and return the element.
+    #[allow(clippy::should_implement_trait)]
     pub fn next(&mut self) -> &T {
         // If we're at the end of the array, move to the start.
         if self.data.get(self.cursor + 1).is_none() {

@@ -108,21 +108,20 @@ fn handle_result(pkglist: &mut Vec<String>, name: &str, result: UninstallResult)
 }
 
 fn uninstall_package(name: &str) -> Result<UninstallResult> {
-    // Check if the package is already installed
+    // Check if the package is installed.
+    // If it isn't, return early.
     let capture = Cmd::new(format!("sudo pacman -Qi {name}")).run()?;
-    let is_installed = capture.success();
-
-    if is_installed {
-        let capture = Cmd::new(format!("sudo pacman -Rns {name} --noconfirm")).run()?;
-
-        if !capture.exit_status.success() {
-            return Ok(UninstallResult::Failed(capture.stdout_str()));
-        } else {
-            return Ok(UninstallResult::Success);
-        }
+    if !capture.success() {
+        return Ok(UninstallResult::NotInstalled);
     }
 
-    Ok(UninstallResult::NotInstalled)
+    let capture = Cmd::new(format!("sudo pacman -Rns {name} --noconfirm")).run()?;
+
+    if !capture.exit_status.success() {
+        Ok(UninstallResult::Failed(capture.stdout_str()))
+    } else {
+        Ok(UninstallResult::Success)
+    }
 }
 
 fn removed_from_list(list: &mut Vec<String>, name: &str) -> bool {
