@@ -5,9 +5,12 @@
 //! - Type
 //! - Signal strength
 use anyhow::Result;
+use clap::{ArgAction, Parser};
+use log::{debug, warn};
 use regex::Regex;
 
 use script_utils::exec::Cmd;
+use script_utils::logging;
 use script_utils::schemas::ip_addr::*;
 
 enum NetworkType {
@@ -16,8 +19,24 @@ enum NetworkType {
     Vpn,
 }
 
+#[derive(Parser, Debug)]
+#[clap(
+    name = "netinfo",
+    about = "Get network info, formatted for a status bar",
+    author = "Arne Beer <contact@arne.beer>"
+)]
+struct CliArguments {
+    /// Verbose mode (-v, -vv, -vvv)
+    #[clap(short, long, action = ArgAction::Count)]
+    pub verbose: u8,
+}
+
 /// Print a string, representing the current network state with IP.
 fn main() -> Result<()> {
+    // Parse commandline options.
+    let args = CliArguments::parse();
+    logging::init_logger(args.verbose);
+
     let capture = Cmd::new("ip -j addr").run_success()?;
     let interfaces: Vec<Interface> = serde_json::from_str(&capture.stdout_str())?;
 
@@ -33,6 +52,8 @@ fn main() -> Result<()> {
         if interface.addr_info.is_empty() || interface.operstate == "DOWN" {
             continue;
         }
+
+        debug!("Interface info: {interface:#?}");
 
         // Try to find an ipv4 address by default.
         let addr = interface
@@ -107,12 +128,17 @@ pub fn wifi_strength(interface: &str) -> &'static str {
     // Return an wifi error symbol if the signal strength cannot be determined.
     let capture_data = match capture_data {
         Ok(capture) => capture,
-        Err(_) => return "",
+        Err(err) => {
+            warn!("Got error reading interface info: {err:#?}");
+            return "";
+        }
     };
 
     let re = Regex::new(r"txpower (\d*)\.\d* dBm").unwrap();
 
     let output = String::from_utf8_lossy(&capture_data.stdout);
+
+    debug!("Iw output: {output:#?}");
     let captures = match re.captures(output.trim()) {
         Some(captures) => captures,
         None => return "",

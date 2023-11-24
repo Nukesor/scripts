@@ -11,7 +11,8 @@ Run `./install.sh` to install all. This deploys:
 
 - `rust` to compile the rust scripts
 - `scrot` for `bin/screenlock`
-- `iwconfig` for `bin/netinfo` (pkg: `wireless_tools`)
+- `iwconfig` for `netinfo` (pkg: `wireless_tools`)
+- `iw` for `netinfo`
 - `pw-dump` for `bin/fix_xonar_output` and `bin/change_sink`
 
 ## Installation
