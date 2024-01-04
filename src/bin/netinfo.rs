@@ -150,7 +150,7 @@ pub fn wifi_strength(interface: &str) -> &'static str {
     };
 
     match level {
-        10..=30 => "▇",
+        01..=30 => "▇",
         51..=67 => "▅",
         68..=70 => "▃",
         71..=80 => "▁",
