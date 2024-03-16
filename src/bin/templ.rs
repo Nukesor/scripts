@@ -7,7 +7,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use chrono::{Datelike, Duration};
+use chrono::{Datelike, TimeDelta};
 use clap::{ArgAction, Parser};
 
 use log::{debug, info};
@@ -95,8 +95,10 @@ fn create_context(args: &CliArguments) -> Result<TeraContext> {
 fn get_default_context() -> Result<HashMap<String, Value>> {
     let mut context: HashMap<String, Value> = HashMap::new();
     let today = chrono::Local::now();
-    let start_of_month = today - Duration::days(today.day0().into());
-    let day_in_last_month = start_of_month - Duration::days(10);
+    let start_of_month = today
+        - TimeDelta::try_days(today.day0().into())
+            .context("Failed to create start of month time delta")?;
+    let day_in_last_month = start_of_month - TimeDelta::try_days(10).unwrap();
 
     // Add german values related to the current date.
     let mut de: HashMap<String, Value> = HashMap::new();

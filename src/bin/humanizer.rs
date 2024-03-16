@@ -3,7 +3,8 @@
 //!
 //! - Seconds -> Datetime
 //! - Nanoseconds -> Datetime
-use chrono::Duration;
+use anyhow::{bail, Context, Result};
+use chrono::TimeDelta;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
@@ -34,7 +35,7 @@ pub struct Time {
     pub seconds: Option<i64>,
 }
 
-fn main() {
+fn main() -> Result<()> {
     // Parse commandline options.
     let args = CliArguments::parse();
 
@@ -43,24 +44,23 @@ fn main() {
     }
 }
 
-pub fn format_time(time: Time) {
+pub fn format_time(time: Time) -> Result<()> {
     let mut duration = if let Some(nanos) = time.nanos {
-        Duration::nanoseconds(nanos)
+        TimeDelta::nanoseconds(nanos)
     } else if let Some(seconds) = time.seconds {
-        Duration::seconds(seconds)
+        TimeDelta::try_seconds(seconds).context("Failed to convert seconds.")?
     } else {
-        println!("Either specify nanos or seconds");
-        std::process::exit(1);
+        bail!("Either specify nanos or seconds");
     };
 
     let days = duration.num_days();
-    duration = duration - Duration::days(days);
+    duration = duration - TimeDelta::try_days(days).context("Failed to convert days")?;
 
     let hours = duration.num_hours();
-    duration = duration - Duration::hours(hours);
+    duration = duration - TimeDelta::try_hours(hours).context("Failed to convert hours")?;
 
     let minutes = duration.num_minutes();
-    duration = duration - Duration::minutes(minutes);
+    duration = duration - TimeDelta::try_minutes(minutes).context("Failed to convert minutes")?;
 
     let seconds = duration.num_seconds();
 
@@ -71,4 +71,6 @@ pub fn format_time(time: Time) {
     formatted.push_str(&format!("{hours:02}:{minutes:02}:{seconds:02}"));
 
     print!("{formatted}");
+
+    Ok(())
 }
