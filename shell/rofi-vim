@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Opens a new neovim in alacritty
+
+project_dirs=`f find-repos /home/nuke/repos /home/nuke/.dotfiles`
+
+selected_directory=$(echo "$project_dirs" | rofi -dmenu -no-custom -i)
+
+set -o allexport
+ROFI_COMMAND="nvim"
+alacritty \
+    --working-directory $selected_directory \
+    --command "zsh"
