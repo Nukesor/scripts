@@ -31,6 +31,8 @@ pub enum SubCommand {
         paths: Vec<PathBuf>,
         #[clap(short, long, default_value = "5")]
         max_depth: usize,
+        #[clap(short, long)]
+        basename: bool,
     },
 }
 
@@ -40,22 +42,37 @@ fn main() -> Result<()> {
     logging::init_logger(args.verbose);
 
     match args.cmd {
-        SubCommand::FindRepos { paths, max_depth } => {
+        SubCommand::FindRepos {
+            paths,
+            max_depth,
+            basename,
+        } => {
             // Find repos up to a depth of 5 directories.
             let mut repos = Vec::new();
             for path in paths {
                 discover_repos(&path, 0, max_depth, &mut repos);
             }
 
-            // Print the list of repos to stdout with newlines
-            println!(
-                "{}",
-                repos
-                    .into_iter()
-                    .map(|p| p.to_string_lossy().to_string())
-                    .collect::<Vec<String>>()
-                    .join("\n")
-            );
+            // Make sure we're always using the same order.
+            repos.sort();
+
+            // Format the list of repos, so each repo is on a new line.
+            let formatted = repos
+                .into_iter()
+                .map(|p| {
+                    // If the basename is requested, only use that basename.
+                    if basename {
+                        if let Some(name) = p.file_name() {
+                            return name.to_string_lossy().to_string();
+                        }
+                    }
+                    p.to_string_lossy().to_string()
+                })
+                .collect::<Vec<String>>()
+                .join("\n");
+
+            // Print the list
+            println!("{formatted}")
         }
     }
 

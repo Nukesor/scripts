@@ -2,12 +2,25 @@
 
 # Opens a new neovim in alacritty
 
-project_dirs=`f find-repos /home/nuke/repos /home/nuke/.dotfiles`
+IFS=$'\n' project_dirs=(`f find-repos /home/nuke/repos /home/nuke/.dotfiles /home/nuke/work`)
+project_dir_names=`f find-repos --basename /home/nuke/repos /home/nuke/.dotfiles /home/nuke/work`
 
-selected_directory=$(echo "$project_dirs" | rofi -dmenu -no-custom -i)
+# `-no-custom` Don't allow custom inputs
+# `-i` case insensitive
+# `-p` Prompt that's displayed next to the search bar
+# `-format` defined the actual output format, 'i' returns just the selected index.
+selected_directory_index=$(echo "$project_dir_names" | rofi -dmenu -no-custom -i -p "nvim" -format 'i')
+
+if [[ $? -ne 0 ]]; then
+    echo "No element selected. Rofi exited early"
+    exit 0
+fi
+
+echo $selected_directory_index
+echo "${project_dirs[$selected_directory_index]}"
 
 set -o allexport
 ROFI_COMMAND="nvim"
 alacritty \
-    --working-directory $selected_directory \
+    --working-directory "${project_dirs[$selected_directory_index]}" \
     --command "zsh"
