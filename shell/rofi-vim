@@ -2,8 +2,26 @@
 
 # Opens a new neovim in alacritty
 
-IFS=$'\n' project_dirs=(`f find-repos /home/nuke/repos /home/nuke/.dotfiles /home/nuke/work`)
-project_dir_names=`f find-repos --basename /home/nuke/repos /home/nuke/.dotfiles /home/nuke/work`
+project_dirs=`
+    f find-repos \
+        /home/nuke/repos \
+        /home/nuke/.dotfiles \
+        /home/nuke/work \
+        --exclude \
+        /home/nuke/repos/archive \
+`
+IFS=$'\n' project_dirs=($project_dirs)
+project_dir_names=`
+    f find-repos \
+        --basename \
+        /home/nuke/repos \
+        /home/nuke/.dotfiles \
+        /home/nuke/work \
+        --exclude \
+        /home/nuke/repos/archive \
+`
+#printf '%s\n' "${project_dirs[@]}"
+#echo $project_dir_names;
 
 # `-no-custom` Don't allow custom inputs
 # `-i` case insensitive

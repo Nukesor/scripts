@@ -33,6 +33,8 @@ pub enum SubCommand {
         max_depth: usize,
         #[clap(short, long)]
         basename: bool,
+        #[clap(short, long)]
+        exclude: Vec<PathBuf>,
     },
 }
 
@@ -46,11 +48,12 @@ fn main() -> Result<()> {
             paths,
             max_depth,
             basename,
+            exclude,
         } => {
             // Find repos up to a depth of 5 directories.
             let mut repos = Vec::new();
             for path in paths {
-                discover_repos(&path, 0, max_depth, &mut repos);
+                discover_repos(&path, 0, max_depth, &exclude, &mut repos);
             }
 
             // Make sure we're always using the same order.
@@ -87,8 +90,17 @@ pub fn discover_repos(
     path: &PathBuf,
     depths: usize,
     max_depth: usize,
+    excluded_dir: &Vec<PathBuf>,
     new_repos: &mut Vec<PathBuf>,
 ) {
+    // Check if this path is in the excluded paths.
+    // If so, just return.
+    for excluded in excluded_dir {
+        if path.starts_with(excluded) {
+            return;
+        }
+    }
+
     // Check if a .git directory exists.
     // If it does, always stop searching.
     let git_dir = path.join(".git");
@@ -126,7 +138,7 @@ pub fn discover_repos(
                     continue;
                 }
 
-                discover_repos(&path, depths + 1, max_depth, new_repos);
+                discover_repos(&path, depths + 1, max_depth, excluded_dir, new_repos);
             }
             Err(err) => {
                 debug!(
