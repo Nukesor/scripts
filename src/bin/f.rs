@@ -32,7 +32,7 @@ pub enum SubCommand {
         #[clap(short, long, default_value = "5")]
         max_depth: usize,
         #[clap(short, long)]
-        basename: bool,
+        short: bool,
         #[clap(short, long)]
         exclude: Vec<PathBuf>,
     },
@@ -47,7 +47,7 @@ fn main() -> Result<()> {
         SubCommand::FindRepos {
             paths,
             max_depth,
-            basename,
+            short,
             exclude,
         } => {
             // Find repos up to a depth of 5 directories.
@@ -62,14 +62,24 @@ fn main() -> Result<()> {
             // Format the list of repos, so each repo is on a new line.
             let formatted = repos
                 .into_iter()
-                .map(|p| {
-                    // If the basename is requested, only use that basename.
-                    if basename {
-                        if let Some(name) = p.file_name() {
-                            return name.to_string_lossy().to_string();
-                        }
+                .map(|path| {
+                    // If the full path is requested, return it directly.
+                    if !short {
+                        return path.to_string_lossy().to_string();
                     }
-                    p.to_string_lossy().to_string()
+
+                    // Check if there's a filename, if not return th e full name.
+                    let Some(basename) = path.file_name() else {
+                        return path.to_string_lossy().to_string();
+                    };
+
+                    // Return the parent + file_name if possible.
+                    // Otherwise only return the file_name.
+                    let mut name = PathBuf::from(basename);
+                    if let Some(parent) = path.parent().map(|dir| dir.file_name()).flatten() {
+                        name = PathBuf::from(parent).join(basename);
+                    }
+                    return name.to_string_lossy().to_string();
                 })
                 .collect::<Vec<String>>()
                 .join("\n");

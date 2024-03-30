@@ -13,7 +13,7 @@ project_dirs=`
 IFS=$'\n' project_dirs=($project_dirs)
 project_dir_names=`
     f find-repos \
-        --basename \
+        --short \
         /home/nuke/repos \
         /home/nuke/.dotfiles \
         /home/nuke/work \
