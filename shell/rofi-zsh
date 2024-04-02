@@ -38,7 +38,10 @@ echo $selected_directory_index
 echo "${project_dirs[$selected_directory_index]}"
 
 set -o allexport
-ROFI_COMMAND="nvim"
+if [[ -n "$1" ]]; then
+    ROFI_COMMAND="$1"
+fi
+
 alacritty \
     --working-directory "${project_dirs[$selected_directory_index]}" \
     --command "zsh"
