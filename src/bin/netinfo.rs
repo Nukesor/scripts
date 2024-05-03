@@ -10,8 +10,8 @@ use log::{debug, warn};
 use regex::Regex;
 
 use script_utils::exec::Cmd;
+use script_utils::ip_addr::*;
 use script_utils::logging;
-use script_utils::schemas::ip_addr::*;
 
 enum NetworkType {
     Ethernet,
@@ -37,8 +37,7 @@ fn main() -> Result<()> {
     let args = CliArguments::parse();
     logging::init_logger(args.verbose);
 
-    let capture = Cmd::new("ip -j addr").run_success()?;
-    let interfaces: Vec<Interface> = serde_json::from_str(&capture.stdout_str())?;
+    let interfaces = get_interfaces()?;
 
     let mut output = Vec::new();
 

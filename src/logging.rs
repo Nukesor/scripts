@@ -6,7 +6,8 @@ pub fn init_logger(level: u8) {
         0 => LevelFilter::Error,
         1 => LevelFilter::Warn,
         2 => LevelFilter::Info,
-        _ => LevelFilter::Debug,
+        3 => LevelFilter::Debug,
+        _ => LevelFilter::Trace,
     };
 
     // Try to initialize the logger with the timezone set to the Local time of the machine.

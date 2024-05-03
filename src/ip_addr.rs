@@ -1,4 +1,15 @@
+use anyhow::Result;
+
 use serde_derive::Deserialize;
+
+use crate::exec::Cmd;
+
+pub fn get_interfaces() -> Result<Vec<Interface>> {
+    let capture = Cmd::new("ip -j addr").run_success()?;
+    let interfaces: Vec<Interface> = serde_json::from_str(&capture.stdout_str())?;
+
+    Ok(interfaces)
+}
 
 /// The entry struct for `ip -j addr` output.
 #[derive(Debug, Deserialize)]

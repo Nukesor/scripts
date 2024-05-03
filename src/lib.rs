@@ -1,10 +1,11 @@
 pub mod exec;
 pub mod fs;
+pub mod ip_addr;
 pub mod logging;
 pub mod notify;
+pub mod pipewire;
 pub mod process;
 pub mod ring;
-pub mod schemas;
 
 pub use anyhow::{anyhow, bail, Context, Result};
 pub use fs::{get_newest_file, path_exists, read_dir_or_fail, FileType};

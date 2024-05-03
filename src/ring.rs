@@ -1,5 +1,6 @@
 use anyhow::{bail, Result};
 
+#[derive(Debug)]
 pub struct Ring<T> {
     cursor: usize,
     data: Vec<T>,
@@ -17,7 +18,14 @@ impl<T> Ring<T> {
         Ok(Ring { cursor: 0, data })
     }
 
+    /// Get the current entry in the ring.
+    /// This panics if the ring is empty.
+    pub fn get(&mut self) -> &T {
+        &self.data[self.cursor]
+    }
+
     /// Move the cursor to the next element and return the element.
+    /// This panics if the ring is empty.
     #[allow(clippy::should_implement_trait)]
     pub fn next(&mut self) -> &T {
         // If we're at the end of the array, move to the start.
@@ -31,6 +39,7 @@ impl<T> Ring<T> {
     }
 
     /// Move the cursor to the previous element and return the element.
+    /// This panics if the ring is empty.
     pub fn prev(&mut self) -> &T {
         // If we're at the start of the array, move to the end.
         if self.cursor == 0 {
