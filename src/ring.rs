@@ -57,11 +57,7 @@ impl<T> Ring<T> {
     where
         Filter: Fn(&(usize, &T)) -> bool,
     {
-        let find_result = self.data.iter().enumerate().find(find);
-
-        let Some((index, _)) = find_result else {
-            return None;
-        };
+        let (index, _) = self.data.iter().enumerate().find(find)?;
 
         self.cursor = index;
         Some(&self.data[self.cursor])

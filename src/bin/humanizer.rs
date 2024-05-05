@@ -54,13 +54,13 @@ pub fn format_time(time: Time) -> Result<()> {
     };
 
     let days = duration.num_days();
-    duration = duration - TimeDelta::try_days(days).context("Failed to convert days")?;
+    duration -= TimeDelta::try_days(days).context("Failed to convert days")?;
 
     let hours = duration.num_hours();
-    duration = duration - TimeDelta::try_hours(hours).context("Failed to convert hours")?;
+    duration -= TimeDelta::try_hours(hours).context("Failed to convert hours")?;
 
     let minutes = duration.num_minutes();
-    duration = duration - TimeDelta::try_minutes(minutes).context("Failed to convert minutes")?;
+    duration -= TimeDelta::try_minutes(minutes).context("Failed to convert minutes")?;
 
     let seconds = duration.num_seconds();
 

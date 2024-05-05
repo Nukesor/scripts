@@ -76,7 +76,7 @@ fn main() -> Result<()> {
                     // Return the parent + file_name if possible.
                     // Otherwise only return the file_name.
                     let mut name = PathBuf::from(basename);
-                    if let Some(parent) = path.parent().map(|dir| dir.file_name()).flatten() {
+                    if let Some(parent) = path.parent().and_then(|dir| dir.file_name()) {
                         name = PathBuf::from(parent).join(basename);
                     }
                     return name.to_string_lossy().to_string();
