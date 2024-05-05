@@ -83,7 +83,7 @@ fn main() -> Result<()> {
 fn switch_device(node: &Node) -> Result<()> {
     let props = &node.info.props;
     // Set the default sink.
-    Cmd::new(format!("wpctl set-default {}", props.object_serial)).run_success()?;
+    Cmd::new(format!("wpctl set-default {}", props.object_id)).run_success()?;
 
     move_inputs_to_sink(props.object_serial)?;
 
