@@ -5,7 +5,7 @@ if [ "$1" == "de" ]; then
     setxkbmap -layout de -option caps:escape
 
     mkdir -p "/tmp/$USER"
-    echo 'de' > "/tmp/$USER/keyboard_layout"
+    echo 'de' >"/tmp/$USER/keyboard_layout"
     echo '{"icon":"keyboard","state":"Idle", "text": " de"}'
 elif [ "$1" == "en" ]; then
     setxkbmap -layout us -variant altgr-intl -option caps:escape -option lv3:ralt_switch -option altwin:swap_lalt_lwin
@@ -17,7 +17,7 @@ elif [ "$1" == "en" ]; then
     xmodmap -e 'keycode 49 = grave asciitilde degree degree degree degree'
 
     mkdir -p "/tmp/$USER"
-    echo 'en' > "/tmp/$USER/keyboard_layout"
+    echo 'en' >"/tmp/$USER/keyboard_layout"
     echo '{"icon": "keyboard","state": "Idle", "text": " en"}'
 elif [ "$1" == "toggle" ]; then
     # Toggle to the other language, depending on the current layout

@@ -31,7 +31,6 @@ rm -rf ~/GPUCache
 rm -rf ~/.gnome
 rm -rf ~/.android
 
-
 # Desktop/File manager
 rm -rf ~/.local/share/Trash/*
 rm -rf ~/Desktop

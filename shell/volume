@@ -20,7 +20,7 @@ elif [ "$1" == "toggle_mute" ]; then
         fi
     else
         # We aren't muted. Set the volume to 0, but save it for later use.
-        echo "$volume" > "$volume_path"
+        echo "$volume" >"$volume_path"
         pactl set-sink-volume @DEFAULT_SINK@ 0
     fi
 fi

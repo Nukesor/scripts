@@ -10,4 +10,3 @@ else
     echo $command
     i3-msg $command
 fi
-

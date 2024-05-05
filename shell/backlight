@@ -17,29 +17,30 @@ brightness_path=${backlight_path}/brightness
 max_bright=$(cat ${backlight_path}/max_brightness)
 current=$(cat $brightness_path)
 
-step=$(($max_bright/100))
+step=$(($max_bright / 100))
 
 if [ "$1" == "up" ]; then
-    new=$(($current+$step))
-    sudo tee $brightness_path <<< $new
+    new=$(($current + $step))
+    sudo tee $brightness_path <<<$new
 elif [ "$1" == "down" ]; then
-    new=$(($current-$step))
-    echo $(( new < 0 ))
-    if (( $new < 0 )); then
+    new=$(($current - $step))
+    echo $((new < 0))
+    if (($new < 0)); then
         new=1
     fi
 
-    sudo tee $brightness_path <<< $new
+    sudo tee $brightness_path <<<$new
 elif [ "$1" == "normal" ]; then
-    new=$(($max_bright/2))
-    sudo tee $brightness_path <<< $new
+    new=$(($max_bright / 2))
+    sudo tee $brightness_path <<<$new
 elif [ "$1" == "max" ]; then
-    sudo tee $brightness_path <<< $max_bright
+    sudo tee $brightness_path <<<$max_bright
 else
     re='^[0-9]'
-    if ! [[ $1 =~ $re ]] ; then
-       echo "error: Not a number" >&2; exit 1
-       exit 1
+    if ! [[ $1 =~ $re ]]; then
+        echo "error: Not a number" >&2
+        exit 1
+        exit 1
     fi
-    sudo tee $brightness_path <<< $1
+    sudo tee $brightness_path <<<$1
 fi

@@ -16,4 +16,3 @@ elif [ "$action" == "down" ]; then
 else
     echo "Use 'up' or 'down'"
 fi
-

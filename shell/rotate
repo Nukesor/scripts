@@ -23,7 +23,7 @@ elif [ "$1" == "down" ]; then
     direction="transpose=2,transpose=2"
 else
     echo "First argument must be either of [left, right down]"
-    exit 1;
+    exit 1
 fi
 
 basename=$(basename -- "$file")
@@ -41,4 +41,3 @@ if [ $? -eq 0 ]; then
 else
     echo "Errored"
 fi
-

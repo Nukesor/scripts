@@ -10,8 +10,8 @@ ipLinkString=($(ip link show $interface))
 count=0
 for element in "${ipLinkString[@]}"; do
     if [[ $element == "link/ether" ]]; then
-        echo "Old Mac: ${ipLinkString[$count+1]}"
-        currentMac="${ipLinkString[$count+1]}"
+        echo "Old Mac: ${ipLinkString[$count + 1]}"
+        currentMac="${ipLinkString[$count + 1]}"
         break
     fi
     ((++count))
@@ -19,8 +19,8 @@ done
 
 # Generating new random mac, first 3 bytes stay the
 # same to ensure a correct vendor id
-firstMac=$(echo $currentMac | head -c 8 )
-lastMac=$(dd bs=1 count=3 if=/dev/random 2>/dev/null |hexdump -v -e '/1 ":%02X"')
+firstMac=$(echo $currentMac | head -c 8)
+lastMac=$(dd bs=1 count=3 if=/dev/random 2>/dev/null | hexdump -v -e '/1 ":%02X"')
 mac=$firstMac$lastMac
 mac=${mac,,}
 
