@@ -1,5 +1,6 @@
 pub mod exec;
 pub mod fs;
+pub mod i3status;
 pub mod ip_addr;
 pub mod logging;
 pub mod notify;
