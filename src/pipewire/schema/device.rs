@@ -31,7 +31,7 @@ pub struct DeviceProps {
     #[serde(rename = "object.id")]
     pub object_id: usize,
     #[serde(rename = "object.path")]
-    pub object_path: String,
+    pub object_path: Option<String>,
     #[serde(rename = "object.serial")]
     pub object_serial: usize,
 
