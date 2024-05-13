@@ -67,6 +67,7 @@ pub fn get_sinks() -> Result<Vec<Node>> {
 fn is_not_plugged_in(node: &Node, devices: &Vec<Device>) -> bool {
     let device_id = &node.info.props.device_id;
     let profile_description = &node.info.props.device_profile_description;
+    let profile_name = &node.info.props.device_profile_name;
 
     // Get the device
     let Some(device) = devices.iter().find(|device| device.id == *device_id) else {
@@ -74,14 +75,20 @@ fn is_not_plugged_in(node: &Node, devices: &Vec<Device>) -> bool {
     };
 
     // Go through all routes
-    for route in &device.info.routes {
-        // Check if the route description matches our profile
-        if &route.description != profile_description {
+    for profile in &device.info.profiles {
+        // There's a bit of inconsistency over here.
+        // From what I've seen, there're several possible ways of finding the matching route.
+        //
+        // - The description matches perfectly
+        // - The profile name matches the node's profile name prefixed with `output`
+        if !(&profile.description == profile_description
+            || profile.name == format!("output:{profile_name}"))
+        {
             continue;
         }
 
         // If we found a matching route, check if it's not plugged in
-        return route.available == "no";
+        return profile.available == "no";
     }
 
     false

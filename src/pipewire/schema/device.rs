@@ -15,7 +15,7 @@ pub struct Device {
 pub struct DeviceInfo {
     pub props: DeviceProps,
     #[serde(rename = "params", deserialize_with = "extract_routes")]
-    pub routes: Vec<Route>,
+    pub profiles: Vec<Profile>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -50,9 +50,8 @@ pub struct DeviceProps {
 /// This profile info contains some interesting data, such as, whether a cable is
 /// plugged in or not.
 #[derive(Debug, Deserialize, Clone)]
-pub struct Route {
+pub struct Profile {
     pub index: usize,
-    pub direction: String,
     pub name: String,
     pub description: String,
     // "yes"|"no"|"unknown"
@@ -63,10 +62,10 @@ pub struct Route {
 /// To be specific in `info.params["Routes"]`
 /// Since we're not interested in the rest of `params`, we just extract that single object from that
 /// list of object.
-fn extract_routes<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Vec<Route>, D::Error> {
+fn extract_routes<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Vec<Profile>, D::Error> {
     let map = serde_json::map::Map::deserialize(deserializer)?;
 
-    let Some(routes) = map.get("EnumRoute") else {
+    let Some(routes) = map.get("EnumProfile") else {
         return Ok(Vec::new());
     };
 
