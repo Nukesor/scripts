@@ -74,8 +74,8 @@ fn is_not_plugged_in(node: &Node, devices: &Vec<Device>) -> bool {
         return false;
     };
 
-    // Go through all routes
-    for profile in &device.info.profiles {
+    // Go through all profiles
+    for profile in &device.info.params.profiles {
         // There's a bit of inconsistency over here.
         // From what I've seen, there're several possible ways of finding the matching route.
         //
@@ -89,6 +89,24 @@ fn is_not_plugged_in(node: &Node, devices: &Vec<Device>) -> bool {
 
         // If we found a matching route, check if it's not plugged in
         return profile.available == "no";
+    }
+
+    // Check all routes.
+    // Some profile-names seem to reference routes, which is pretty confusing
+    for route in &device.info.params.routes {
+        // There's a bit of inconsistency over here.
+        // From what I've seen, there're several possible ways of finding the matching route.
+        //
+        // - The description matches perfectly
+        // - The profile name matches the node's profile name prefixed with `output`
+        if !(&route.description == profile_description
+            || route.name == format!("output:{profile_name}"))
+        {
+            continue;
+        }
+
+        // If we found a matching route, check if it's not plugged in
+        return route.available == "no";
     }
 
     false

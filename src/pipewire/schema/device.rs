@@ -1,4 +1,3 @@
-use serde::{de, Deserialize, Deserializer};
 use serde_derive::Deserialize;
 
 /// Representation of a Pipewire device
@@ -14,8 +13,7 @@ pub struct Device {
 #[derive(Debug, Deserialize, Clone)]
 pub struct DeviceInfo {
     pub props: DeviceProps,
-    #[serde(rename = "params", deserialize_with = "extract_routes")]
-    pub profiles: Vec<Profile>,
+    pub params: Params,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -44,6 +42,14 @@ pub struct DeviceProps {
     pub client_id: usize,
 }
 
+#[derive(Debug, Deserialize, Clone)]
+pub struct Params {
+    #[serde(rename = "EnumProfile", default)]
+    pub profiles: Vec<Profile>,
+    #[serde(rename = "EnumRoute", default)]
+    pub routes: Vec<Profile>,
+}
+
 /// A device can have multiple in-/outgoing routes.
 /// Each has their own profile
 ///
@@ -56,18 +62,4 @@ pub struct Profile {
     pub description: String,
     // "yes"|"no"|"unknown"
     pub available: String,
-}
-
-/// The routes are deep inside a bunch of other irrelevant info.
-/// To be specific in `info.params["Routes"]`
-/// Since we're not interested in the rest of `params`, we just extract that single object from that
-/// list of object.
-fn extract_routes<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Vec<Profile>, D::Error> {
-    let map = serde_json::map::Map::deserialize(deserializer)?;
-
-    let Some(routes) = map.get("EnumProfile") else {
-        return Ok(Vec::new());
-    };
-
-    serde_json::from_value(routes.clone()).map_err(de::Error::custom)
 }
