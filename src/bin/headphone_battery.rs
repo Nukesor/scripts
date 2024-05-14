@@ -28,108 +28,135 @@ fn main() -> Result<()> {
     logging::init_logger(args.verbose);
 
     // Check headsetcontrol first
-    let mut battery_status = headsetcontrol();
+    let mut device_status = headsetcontrol();
 
     // Check bluetoothctl next.
-    if battery_status.is_none() {
-        battery_status = bluetoothctl();
+    if device_status == DeviceStatus::Unavailable {
+        device_status = bluetoothctl();
     }
 
     // If we got some headphone info, format and print it.
-    if let Some(battery_status) = battery_status {
-        let i3state = state_from_battery_status(&battery_status);
+    let i3state = state_from_battery_status(&device_status);
 
-        let inner_text = match battery_status {
-            BatteryStatus::Charging => "Charging".to_string(),
-            BatteryStatus::Percentage(percent) => format!("{percent}%"),
-        };
-        let text = format!("( {inner_text})");
+    let inner_text = match device_status {
+        DeviceStatus::Charging { percentage } => {
+            if let Some(percentage) = percentage {
+                format!("{percentage}% ")
+            } else {
+                "".to_string()
+            }
+        }
+        DeviceStatus::Available { percentage } => format!("{percentage}%"),
+        DeviceStatus::Unavailable => {
+            // We didn't get any info, return an empty response.
+            println!("{}", serde_json::to_string(&CustomI3Status::default())?);
+            return Ok(());
+        }
+    };
 
-        let json = serde_json::to_string(&CustomI3Status::new(i3state, text))?;
-        println!("{json}");
-        return Ok(());
-    }
-
-    // We didn't get any info, return an empty response.
-    println!("{}", serde_json::to_string(&CustomI3Status::default())?);
+    let text = format!("( {inner_text})");
+    let json = serde_json::to_string(&CustomI3Status::new(i3state, text))?;
+    println!("{json}");
 
     Ok(())
 }
 
-enum BatteryStatus {
-    Charging,
-    Percentage(usize),
+#[derive(PartialEq)]
+enum DeviceStatus {
+    Charging { percentage: Option<usize> },
+    Available { percentage: usize },
+    Unavailable,
 }
 
 /// Determine the i3status state for this section.
 /// The color will change if the battery reaches certain states.
-fn state_from_battery_status(battery_status: &BatteryStatus) -> I3State {
+fn state_from_battery_status(battery_status: &DeviceStatus) -> I3State {
     match battery_status {
-        BatteryStatus::Charging => I3State::Idle,
-        BatteryStatus::Percentage(percent) => match percent {
+        DeviceStatus::Charging { .. } => I3State::Idle,
+        DeviceStatus::Available { percentage } => match percentage {
             0..=15 => I3State::Critical,
             16..=25 => I3State::Warning,
             26..=35 => I3State::Good,
             _ => I3State::Idle,
         },
+        _ => I3State::Idle,
     }
 }
 
 // First check `headsetcontrol`.
 // <https://github.com/Sapd/HeadsetControl>
-fn headsetcontrol() -> Option<BatteryStatus> {
+fn headsetcontrol() -> DeviceStatus {
     let result = Cmd::new("headsetcontrol --battery").run_success();
     let output = match result {
         Ok(capture) => capture.stdout_str(),
         Err(err) => {
             warn!("Got error on headsetcontrol call:\n{err:#?}");
-            return None;
+            return DeviceStatus::Unavailable;
         }
     };
 
-    // Output of the command looks like this:
+    enum Availablility {
+        Charging,
+        Available,
+        Unavailable,
+    }
+
+    // Output looks like this:
     // ```
-    // Found SteelSeries Arctis Nova 7!
-    // Battery: 25%
-    // Success!
+    // Found SteelSeries Arctis Nova 7 (Arctis Nova 7)!
+    //
+    // Battery:
+    // 	      Status: BATTERY_AVAILABLE
+    // 	      Level: 100%
     // ```
+    let mut availability = Availablility::Unavailable;
     for line in output.lines() {
+        let line = line.trim();
+        if line.starts_with("Status:") {
+            let parts: Vec<String> = line.split(" ").map(|s| s.to_string()).collect();
+            let status_str = &parts[1];
+
+            availability = match status_str.as_str() {
+                "BATTERY_CHARGING" => Availablility::Charging,
+                "BATTERY_AVAILABLE" => Availablility::Available,
+                _ => Availablility::Unavailable,
+            };
+        }
+
         // Battery output of the command looks like this
-        if line.starts_with("Battery:") {
+        if line.starts_with("Level:") {
             let parts: Vec<String> = line.split(" ").map(|s| s.to_string()).collect();
             let battery = &parts[1];
 
-            // The dongle will be detected even if the headset isn't visible.
-            // In that case we get an "Unavailable" battery status.
-            if battery == "Unavailable" {
-                return None;
-            }
-
-            if battery == "Charging" {
-                return Some(BatteryStatus::Charging);
-            }
-
             // Remove the percentage sign
-            let Ok(battery) = battery.trim_end_matches("%").parse() else {
+            let Ok(percentage) = battery.trim_end_matches("%").parse() else {
                 warn!("Failed to parse battery value to usize: {battery}");
-                return None;
+                return DeviceStatus::Unavailable;
             };
 
-            return Some(BatteryStatus::Percentage(battery));
+            let status = match availability {
+                Availablility::Charging => DeviceStatus::Charging {
+                    percentage: Some(percentage),
+                },
+                Availablility::Available => DeviceStatus::Available { percentage },
+                Availablility::Unavailable => DeviceStatus::Unavailable,
+            };
+
+            return status;
         }
     }
 
-    return None;
+    return DeviceStatus::Unavailable;
 }
 
 // First check `bluetoothctl`.
-fn bluetoothctl() -> Option<BatteryStatus> {
+fn bluetoothctl() -> DeviceStatus {
     let result = Cmd::new("bluetoothctl info").run_success();
     let output = match result {
         Ok(capture) => capture.stdout_str(),
         Err(err) => {
             warn!("Got error on headsetcontrol call:\n{err:#?}");
-            return None;
+            return DeviceStatus::Unavailable;
         }
     };
 
@@ -148,14 +175,14 @@ fn bluetoothctl() -> Option<BatteryStatus> {
             let battery = &parts[1];
 
             // Remove the closing bracket
-            let Ok(battery) = battery.trim_end_matches(")").parse() else {
+            let Ok(percentage) = battery.trim_end_matches(")").parse() else {
                 warn!("Failed to parse battery value to usize: {battery}");
-                return None;
+                return DeviceStatus::Unavailable;
             };
 
-            return Some(BatteryStatus::Percentage(battery));
+            return DeviceStatus::Available { percentage };
         }
     }
 
-    return None;
+    return DeviceStatus::Unavailable;
 }
