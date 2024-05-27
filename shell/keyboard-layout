@@ -1,25 +1,35 @@
 #!/bin/bash
 set -euo pipefail
 
-if [ "$1" == "de" ]; then
-    setxkbmap -layout de -option caps:escape
+language=$1
+languages="de en toggle"
+
+if [[ ! " ${languages} " == *" $1 "* ]]; then
+    echo "Invalid language."
+    echo "Valid languages are: $languages"
+    exit 1
+fi
+
+if [ "${language}" == "de" ]; then
+    setxkbmap -layout de \
+        -option caps:escape
 
     mkdir -p "/tmp/$USER"
     echo 'de' >"/tmp/$USER/keyboard_layout"
     echo '{"icon":"keyboard","state":"Idle", "text": " de"}'
-elif [ "$1" == "en" ]; then
-    setxkbmap -layout us -variant altgr-intl -option caps:escape -option lv3:ralt_switch -option altwin:swap_lalt_lwin
-    xmodmap -e "keycode 94 = less greater bar"
-    xmodmap -e "keycode 38 = a A adiaeresis Adiaeresis adiaeresis Adiaeresis"
-    xmodmap -e "keycode 40 = d D odiaeresis Odiaeresis odiaeresis Odiaeresis"
-    xmodmap -e "keycode 41 = f F udiaeresis Udiaeresis udiaeresis Udiaeresis"
-    xmodmap -e "keycode 32 = o O Greek_omega Greek_OMEGA Greek_omega Greek_OMEGA"
-    xmodmap -e 'keycode 49 = grave asciitilde degree degree degree degree'
+elif [ "${language}" == "en" ]; then
+    setxkbmap \
+        -layout arne \
+        -variant altgr-weur \
+        -option caps:escape \
+        -option lv3:ralt_switch \
+        -option altwin:swap_lalt_lwin
 
     mkdir -p "/tmp/$USER"
     echo 'en' >"/tmp/$USER/keyboard_layout"
     echo '{"icon": "keyboard","state": "Idle", "text": " en"}'
-elif [ "$1" == "toggle" ]; then
+
+elif [ "${language}" == "toggle" ]; then
     # Toggle to the other language, depending on the current layout
     if [ "$(cat /tmp/$USER/keyboard_layout)" == "de" ]; then
         ~/.bin/keyboard-layout en
