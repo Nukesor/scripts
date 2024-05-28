@@ -1,5 +1,5 @@
 #!/bin/bash
-# Set the brightness of the display.
+# Set the volume of the display.
 
 mkdir -p "/tmp/$USER"
 volume_path="/tmp/$USER/previous_volume"
