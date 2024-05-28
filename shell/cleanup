@@ -23,6 +23,7 @@ rm -rf ~/.putty
 # Java stuff
 rm -rf ~/.java
 rm -rf ~/.gradle
+rm -rf ~/.rye
 
 # Wtf
 rm -rf ~/.esd_auth

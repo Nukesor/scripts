@@ -36,10 +36,11 @@ elif [ "$1" == "normal" ]; then
 elif [ "$1" == "max" ]; then
     sudo tee $brightness_path <<<$max_bright
 else
+    # If it's neither of the above commands, assume that we want to directly
+    # set an number. Check if it's a number, otherwise exit with an error.
     re='^[0-9]'
     if ! [[ $1 =~ $re ]]; then
         echo "error: Not a number" >&2
-        exit 1
         exit 1
     fi
     sudo tee $brightness_path <<<$1
