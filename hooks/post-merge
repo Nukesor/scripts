@@ -1,4 +1,4 @@
 #!/bin/sh
 
 # A git hook, which automatically deploys the scripts whenever we pull new files.
-./install.sh
+./install
