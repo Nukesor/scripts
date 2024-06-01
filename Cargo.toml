@@ -23,7 +23,7 @@ image = { version = "0.25", features = [
   "jpeg",
   "rayon",
 ], default-features = false }
-itertools = "0.12"
+itertools = "0.13"
 log = "0.4"
 procfs = { version = "0.16", default-features = false }
 rayon = "1"
