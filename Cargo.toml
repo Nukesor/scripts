@@ -11,6 +11,11 @@ path = "src/lib.rs"
 [profile.release]
 lto = "thin"
 
+
+[lints.clippy]
+# This one is having too many false-positives and it makes the code harder to read.
+assigning_clones = "allow"
+
 [dependencies]
 anyhow = "1"
 better-panic = "0.3"

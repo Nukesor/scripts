@@ -64,7 +64,7 @@ pub fn get_sinks() -> Result<Vec<Node>> {
 /// - No device is found
 /// - No matching profile is found
 /// - The status of the profile is `unknown`.
-fn is_not_plugged_in(node: &Node, devices: &Vec<Device>) -> bool {
+fn is_not_plugged_in(node: &Node, devices: &[Device]) -> bool {
     let device_id = &node.info.props.device_id;
     let profile_description = &node.info.props.device_profile_description;
     let profile_name = &node.info.props.device_profile_name;

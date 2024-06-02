@@ -67,5 +67,5 @@ pub fn parse_pw_dump() -> Result<(Vec<Device>, Vec<Node>)> {
         }
     }
 
-    return Ok((devices, nodes));
+    Ok((devices, nodes))
 }

@@ -113,7 +113,7 @@ fn headsetcontrol() -> DeviceStatus {
     for line in output.lines() {
         let line = line.trim();
         if line.starts_with("Status:") {
-            let parts: Vec<String> = line.split(" ").map(|s| s.to_string()).collect();
+            let parts: Vec<String> = line.split(' ').map(|s| s.to_string()).collect();
             let status_str = &parts[1];
 
             availability = match status_str.as_str() {
@@ -125,11 +125,11 @@ fn headsetcontrol() -> DeviceStatus {
 
         // Battery output of the command looks like this
         if line.starts_with("Level:") {
-            let parts: Vec<String> = line.split(" ").map(|s| s.to_string()).collect();
+            let parts: Vec<String> = line.split(' ').map(|s| s.to_string()).collect();
             let battery = &parts[1];
 
             // Remove the percentage sign
-            let Ok(percentage) = battery.trim_end_matches("%").parse() else {
+            let Ok(percentage) = battery.trim_end_matches('%').parse() else {
                 warn!("Failed to parse battery value to usize: {battery}");
                 return DeviceStatus::Unavailable;
             };
@@ -146,7 +146,7 @@ fn headsetcontrol() -> DeviceStatus {
         }
     }
 
-    return DeviceStatus::Unavailable;
+    DeviceStatus::Unavailable
 }
 
 // First check `bluetoothctl`.
@@ -171,11 +171,11 @@ fn bluetoothctl() -> DeviceStatus {
         // Battery output of the command looks like this
         if line.trim().starts_with("Battery Percentage:") {
             // Split at `(` to get the last part: `100)`
-            let parts: Vec<String> = line.split("(").map(|s| s.to_string()).collect();
+            let parts: Vec<String> = line.split('(').map(|s| s.to_string()).collect();
             let battery = &parts[1];
 
             // Remove the closing bracket
-            let Ok(percentage) = battery.trim_end_matches(")").parse() else {
+            let Ok(percentage) = battery.trim_end_matches(')').parse() else {
                 warn!("Failed to parse battery value to usize: {battery}");
                 return DeviceStatus::Unavailable;
             };
@@ -184,5 +184,5 @@ fn bluetoothctl() -> DeviceStatus {
         }
     }
 
-    return DeviceStatus::Unavailable;
+    DeviceStatus::Unavailable
 }
