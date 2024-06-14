@@ -66,8 +66,18 @@ pub fn get_sinks() -> Result<Vec<Node>> {
 /// - The status of the profile is `unknown`.
 fn is_not_plugged_in(node: &Node, devices: &[Device]) -> bool {
     let device_id = &node.info.props.device_id;
-    let profile_description = &node.info.props.device_profile_description;
-    let profile_name = &node.info.props.device_profile_name;
+
+    // Ensure that there's a device profile description and name.
+    // Without this, we cannot check whether the node is actually plugged in.
+    //
+    // For now, this was only the case for devices like Bluetooth Headsets,
+    // which are only present if connected.
+    let Some(profile_description) = &node.info.props.device_profile_description else {
+        return false;
+    };
+    let Some(profile_name) = &node.info.props.device_profile_name else {
+        return false;
+    };
 
     // Get the device
     let Some(device) = devices.iter().find(|device| device.id == *device_id) else {

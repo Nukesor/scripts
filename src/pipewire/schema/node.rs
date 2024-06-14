@@ -22,15 +22,15 @@ pub struct NodeProps {
     #[serde(rename = "device.id")]
     pub device_id: usize,
     #[serde(rename = "device.api")]
-    pub device_api: String,
+    pub device_api: Option<String>,
     #[serde(rename = "device.class")]
-    pub device_class: String,
+    pub device_class: Option<String>,
 
     /// Info about the device profile this node belongs to
     #[serde(rename = "device.profile.description")]
-    pub device_profile_description: String,
+    pub device_profile_description: Option<String>,
     #[serde(rename = "device.profile.name")]
-    pub device_profile_name: String,
+    pub device_profile_name: Option<String>,
 
     /// Info about this very node
     #[serde(rename = "node.name")]
@@ -38,13 +38,13 @@ pub struct NodeProps {
     #[serde(rename = "node.description")]
     pub node_description: String,
     #[serde(rename = "node.nick")]
-    pub node_nick: String,
+    pub node_nick: Option<String>,
 
     /// The object properties of this node.
     #[serde(rename = "object.id")]
     pub object_id: usize,
     #[serde(rename = "object.path")]
-    pub object_path: String,
+    pub object_path: Option<String>,
     #[serde(rename = "object.serial")]
     pub object_serial: usize,
 
