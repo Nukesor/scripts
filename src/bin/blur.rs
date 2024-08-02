@@ -12,7 +12,7 @@ use std::{
 
 use anyhow::{Context, Result};
 use clap::{ArgAction, Parser};
-use image::{io::Reader as ImageReader, DynamicImage, ImageBuffer, Pixel, Rgb, RgbImage};
+use image::{DynamicImage, ImageBuffer, ImageReader, Pixel, Rgb, RgbImage};
 use log::debug;
 use rayon::{
     iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator},
