@@ -1,4 +1,7 @@
-//! A convenience wrapper to quickly apply a variable file to a tera template.
+//! Mini tool to quickly template any file.
+//!
+//! Currently uses Tera for templating, but might switch to `upon` soon.
+//! Takes a single template file and multiple files that specify variables.
 use std::{
     collections::HashMap,
     fs::File,
@@ -29,11 +32,11 @@ struct CliArguments {
     /// The path to the template.
     pub template: PathBuf,
 
-    /// The path to the variable file (YAML for now).
-    /// Files that're passed later may overwrite earlier variables.
+    /// Paths to the variable files (only YAML for now).
+    /// Variables in Files that're passed in later will have precedence.
     pub variables: Vec<PathBuf>,
 
-    /// Where the output should be written to.
+    /// Where the output file will be written to.
     pub output: PathBuf,
 }
 
@@ -55,7 +58,7 @@ fn main() -> Result<()> {
 
     info!("Rendered template:\n##########\n{rendered}\n##########");
 
-    // Write the templte to disk.
+    // Write the template to disk.
     let mut file = File::create(&args.output)
         .context(format!("Failed to create file at: {:?}", &args.output))?;
     file.write_all(rendered.as_bytes())
@@ -68,17 +71,17 @@ fn create_context(args: &CliArguments) -> Result<TeraContext> {
     let mut context = get_default_context()?;
 
     for file in args.variables.iter() {
-        // Open the file in read-only mode with buffer.
+        // Read the yaml file into a HashMap of [Value], which can
+        // be easily consumed by the Tera context.
         let file = File::open(file).context(format!(
             "Failed to open template file at: {:?}",
             &args.variables
         ))?;
         let reader = BufReader::new(&file);
-
-        // Convert the yaml represention to a json representation, as the Tera Context can directly
         let variables: HashMap<String, Value> = serde_yaml::from_reader(reader)
             .context(format!("Failed to read template file at: {file:?}"))?;
 
+        // Merge all variables together
         variables.into_iter().for_each(|(key, value)| {
             context.insert(key, value);
         });
@@ -100,7 +103,7 @@ fn get_default_context() -> Result<HashMap<String, Value>> {
             .context("Failed to create start of month time delta")?;
     let day_in_last_month = start_of_month - TimeDelta::try_days(10).unwrap();
 
-    // Add german values related to the current date.
+    // Add a few German values related to the current date.
     let mut de: HashMap<String, Value> = HashMap::new();
     let german_months = [
         "Januar",
