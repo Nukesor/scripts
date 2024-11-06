@@ -1,4 +1,4 @@
-use serde_derive::Deserialize;
+use serde::Deserialize;
 
 /// Representation of a Pipewire device
 #[derive(Debug, Deserialize, Clone)]

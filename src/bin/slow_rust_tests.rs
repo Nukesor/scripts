@@ -11,7 +11,7 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use clap::{ArgAction, Parser};
 use comfy_table::Table;
-use serde_derive::Deserialize;
+use serde::Deserialize;
 
 use script_utils::logging;
 

@@ -1,6 +1,6 @@
 use anyhow::{bail, Context, Result};
 use log::{debug, error, info, trace, warn};
-use strum_macros::Display;
+use strum::Display;
 
 use crate::{exec::Cmd, notify::*, ring::Ring};
 

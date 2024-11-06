@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use serde_derive::Deserialize;
+use serde::Deserialize;
 
 use crate::exec::Cmd;
 

@@ -5,7 +5,7 @@ use std::{fs::read_to_string, path::PathBuf, str::Lines};
 use anyhow::Result;
 use clap::Parser;
 use script_utils::Context;
-use serde_derive::Serialize;
+use serde::Serialize;
 
 #[derive(Parser, Debug)]
 pub struct CliArguments {

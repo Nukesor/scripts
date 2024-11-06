@@ -11,7 +11,6 @@ path = "src/lib.rs"
 [profile.release]
 lto = "thin"
 
-
 [lints.clippy]
 # This one is having too many false-positives and it makes the code harder to read.
 assigning_clones = "allow"
@@ -22,25 +21,21 @@ better-panic = "0.3"
 chrono = "0.4"
 clap = { version = "4", features = ["derive"] }
 comfy-table = "7"
-crossterm = "0.28"
 image = { version = "0.25", features = [
   "png",
   "jpeg",
   "rayon",
 ], default-features = false }
-itertools = "0.13"
 log = "0.4"
 procfs = { version = "0.17", default-features = false }
 rayon = "1"
 regex = "1"
-serde = "1"
-serde_derive = "1"
+serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9"
 shellexpand = "3"
 simplelog = { version = "0.12" }
-strum = "0.26"
-strum_macros = "0.26"
+strum = { version = "0.26", features = ["derive"] }
 subprocess = "0.2"
 tera = "1"
 users = "0.11"
