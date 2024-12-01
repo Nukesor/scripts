@@ -54,6 +54,7 @@ fn main() -> Result<()> {
     let start = Instant::now();
     // Spawn i3lock directly from in here.
     let (width, height) = image.dimensions();
+    #[allow(clippy::zombie_processes)]
     let mut child = Command::new("i3lock")
         .arg("--show-failed-attempts")
         .arg("--raw")

@@ -79,7 +79,7 @@ fn main() -> Result<()> {
                     if let Some(parent) = path.parent().and_then(|dir| dir.file_name()) {
                         name = PathBuf::from(parent).join(basename);
                     }
-                    return name.to_string_lossy().to_string();
+                    name.to_string_lossy().to_string()
                 })
                 .collect::<Vec<String>>()
                 .join("\n");
