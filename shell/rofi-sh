@@ -34,14 +34,14 @@ if [[ $? -ne 0 ]]; then
     exit 0
 fi
 
-echo $selected_directory_index
+echo "$selected_directory_index"
 echo "${project_dirs[$selected_directory_index]}"
 
 set -o allexport
 if [[ -n "$1" ]]; then
-    ROFI_COMMAND="$1"
+    export ROFI_COMMAND="$1"
 fi
 
 alacritty \
     --working-directory "${project_dirs[$selected_directory_index]}" \
-    --command "zsh"
+    --command "fish"
