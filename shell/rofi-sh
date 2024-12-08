@@ -5,7 +5,7 @@
 project_dirs=$(
     f find-repos \
         /home/nuke/repos \
-        /home/nuke/.dotfiles \
+        /home/nuke/.config/dotfiles \
         /home/nuke/work \
         --exclude \
         /home/nuke/repos/archive
@@ -15,7 +15,7 @@ project_dir_names=$(
     f find-repos \
         --short \
         /home/nuke/repos \
-        /home/nuke/.dotfiles \
+        /home/nuke/.config/dotfiles \
         /home/nuke/work \
         --exclude \
         /home/nuke/repos/archive
