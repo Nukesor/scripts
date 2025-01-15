@@ -5,10 +5,12 @@
 devices=$(lsblk -d -o NAME -n)
 
 for device in $devices; do
-    echo $device
-    smartctl -a /dev/$device | grep -e self-assessment \
+    echo "Checking $device"
+    smartctl -a "/dev/$device" | grep -e self-assessment \
+        -e Raw_Read_Error_Rate \
         -e Reallocated_Sector_Ct \
         -e Current_Pending_Sector \
         -e Offline_Uncorrectable \
         -e Power_On_Hours
+    echo ""
 done
