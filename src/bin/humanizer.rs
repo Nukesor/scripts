@@ -3,7 +3,7 @@
 //!
 //! - Seconds -> Datetime
 //! - Nanoseconds -> Datetime
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use chrono::TimeDelta;
 use clap::Parser;
 

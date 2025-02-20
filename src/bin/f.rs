@@ -6,7 +6,6 @@ use std::{fs::read_dir, path::PathBuf};
 use anyhow::Result;
 use clap::{ArgAction, Parser};
 use log::debug;
-
 use script_utils::logging;
 
 #[derive(Parser, Debug)]

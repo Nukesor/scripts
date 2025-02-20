@@ -12,7 +12,6 @@ use std::{
 use anyhow::{Context, Result};
 use chrono::{Datelike, TimeDelta};
 use clap::{ArgAction, Parser};
-
 use log::{debug, info};
 use script_utils::{logging, prelude::*};
 use serde_yaml::Value;

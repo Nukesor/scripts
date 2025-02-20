@@ -11,9 +11,8 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use clap::{ArgAction, Parser};
 use comfy_table::Table;
-use serde::Deserialize;
-
 use script_utils::logging;
+use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 enum Event {

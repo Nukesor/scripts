@@ -7,9 +7,8 @@
 //! - pactl
 use anyhow::Result;
 use clap::{ArgAction, Parser};
-use strum::Display;
-
 use script_utils::{exec::Cmd, logging, notify::*, pipewire::*};
+use strum::Display;
 
 #[derive(Parser, Debug)]
 #[clap(

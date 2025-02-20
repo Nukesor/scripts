@@ -3,7 +3,6 @@ use std::collections::{HashMap, HashSet};
 use anyhow::Result;
 use chrono::{DateTime, Local};
 use clap::{ArgAction, Parser};
-
 use log::{debug, info};
 use script_utils::{logging, notify::*, process::get_process_cmdlines};
 

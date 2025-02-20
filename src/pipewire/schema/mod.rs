@@ -1,9 +1,9 @@
 use anyhow::{Context, Result};
+pub use device::*;
+pub use node::*;
 use serde_json::Value;
 
 use crate::prelude::Cmd;
-pub use device::*;
-pub use node::*;
 
 pub mod device;
 pub mod node;

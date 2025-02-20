@@ -1,12 +1,11 @@
 use std::{
-    fs::{remove_file, File},
+    fs::{File, remove_file},
     path::PathBuf,
 };
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use chrono::{DateTime, Utc};
 use clap::{ArgAction, Parser};
-
 use dirs::runtime_dir;
 use log::info;
 use script_utils::{logging, notify::*};

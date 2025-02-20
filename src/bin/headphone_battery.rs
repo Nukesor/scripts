@@ -2,7 +2,6 @@
 
 use anyhow::Result;
 use clap::{ArgAction, Parser};
-
 use log::warn;
 use script_utils::{
     exec::Cmd,

@@ -3,7 +3,7 @@
 //! This doesn't have pipe support yet.
 use std::collections::HashMap;
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use shellexpand::tilde;
 use subprocess::{CaptureData, Exec, Redirection};
 

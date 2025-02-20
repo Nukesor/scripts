@@ -1,13 +1,12 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use log::{debug, error, info, trace, warn};
 use strum::Display;
 
-use crate::{exec::Cmd, notify::*, ring::Ring};
-
 use super::{
-    schema::{node::Node, parse_pw_dump},
     Device,
+    schema::{node::Node, parse_pw_dump},
 };
+use crate::{exec::Cmd, notify::*, ring::Ring};
 
 // Some sinks are just uninteresting for me.
 const IGNORED_SINKS: &[&str] = &[

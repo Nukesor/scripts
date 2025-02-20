@@ -8,10 +8,7 @@ use anyhow::Result;
 use clap::{ArgAction, Parser};
 use log::{debug, warn};
 use regex::Regex;
-
-use script_utils::exec::Cmd;
-use script_utils::ip_addr::*;
-use script_utils::logging;
+use script_utils::{exec::Cmd, ip_addr::*, logging};
 
 enum NetworkType {
     Ethernet,
@@ -112,15 +109,16 @@ fn main() -> Result<()> {
 }
 
 /// Determine the network strength of a given device.
-/// -30 dBm Maximum signal strength, you are probably standing right next to the access point / router.
-/// -50 dBm Anything down to this level can be regarded as excellent signal strength.
+/// -30 dBm Maximum signal strength, you are probably standing right next to the access point /
+/// router. -50 dBm Anything down to this level can be regarded as excellent signal strength.
 /// -60 dBm This is still good, reliable signal strength.
-/// -67 dBm This is the minimum value for all services that require smooth and reliable data traffic.
-///  VoIP/VoWi-Fi Video streaming/streaming (not the highest quality)
+/// -67 dBm This is the minimum value for all services that require smooth and reliable data
+/// traffic.  VoIP/VoWi-Fi Video streaming/streaming (not the highest quality)
 /// -70 dBm The signal is not very strong, but mostly sufficient. Web, email, and the like
 /// -80 dBm Minimum value required to make a connection.
-///  You cannot count on a reliable connection or sufficient signal strength to use services at this level.
-/// -90 dBm It is very unlikely that you will be able to connect or make use of any services with this signal strength.
+///  You cannot count on a reliable connection or sufficient signal strength to use services at this
+/// level. -90 dBm It is very unlikely that you will be able to connect or make use of any services
+/// with this signal strength.
 pub fn wifi_strength(interface: &str) -> &'static str {
     let capture_data =
         Cmd::new(format!("iw dev {interface} info | rg '^.*txpower.*'")).run_success();

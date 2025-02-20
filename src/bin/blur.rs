@@ -18,7 +18,6 @@ use rayon::{
     iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator},
     slice::ParallelSliceMut,
 };
-
 use script_utils::{bail, logging, prelude::*};
 
 const SCREENSHOT_PATH: &str = "/tmp/blur-screenshot.jpg";

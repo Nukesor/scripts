@@ -8,12 +8,11 @@ pub mod pipewire;
 pub mod process;
 pub mod ring;
 
-pub use anyhow::{anyhow, bail, Context, Result};
-pub use fs::{get_newest_file, path_exists, read_dir_or_fail, FileType};
+pub use anyhow::{Context, Result, anyhow, bail};
+pub use fs::{FileType, get_newest_file, path_exists, read_dir_or_fail};
 
 pub mod prelude {
-    pub use super::exec::*;
-    pub use super::fs::*;
+    pub use super::{exec::*, fs::*};
 }
 
 /// Generic setup function that will be called in all scripts

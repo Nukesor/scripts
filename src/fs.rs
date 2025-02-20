@@ -1,13 +1,14 @@
 //! All file system related helper functions.
-use std::fs::{read_to_string, DirEntry};
-use std::path::{Path, PathBuf};
-use std::time::SystemTime;
+use std::{
+    fs::{DirEntry, read_to_string},
+    path::{Path, PathBuf},
+    time::SystemTime,
+};
 
 use anyhow::{Context, Result};
-use shellexpand::tilde;
-
 pub use file::*;
 pub use path::*;
+use shellexpand::tilde;
 
 pub mod path {
     use super::*;
