@@ -24,9 +24,15 @@ use std::{
 use anyhow::{Context, Result, bail};
 use chrono::{Datelike, Days, Months, NaiveDate, NaiveDateTime, TimeDelta, Utc};
 use clap::{ArgAction, Parser};
-use log::{debug, error, info};
+use log::error;
 use regex::Regex;
-use script_utils::{FileType, logging, read_dir_or_fail};
+use script_utils::{
+    FileType,
+    fs::find_leaf_dirs,
+    logging,
+    read_dir_or_fail,
+    table::{pretty_table, print_headline_table},
+};
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -61,6 +67,11 @@ pub struct CliArguments {
     /// Don't do any operations unless this flag is set
     #[clap(short, long)]
     pub execute: bool,
+
+    /// If this is set, recursively search for folders with backups from the given path.
+    /// This will run the staggered backups for each directory that is found.
+    #[clap(short, long)]
+    pub recursive: bool,
 }
 
 fn main() -> Result<()> {
@@ -69,23 +80,40 @@ fn main() -> Result<()> {
     // Min log level INFO
     logging::init_logger(args.verbose + 2);
 
-    let files =
-        read_dir_or_fail(&args.path, Some(FileType::File)).context("Failed to read files")?;
-    let mut files_by_date = BTreeMap::new();
-
-    println!(
-        "Running staggered backup cleanup for folder: {:?}",
-        args.path
-    );
     if !args.execute {
         println!("--- DRY RUN MODE ---");
     }
+    if args.recursive {
+        println!("WARNING: Running in recursive mode.");
+    }
+    println!();
 
+    if !args.recursive {
+        run_staggered_backup(&args.path, &args)?;
+    } else {
+        let leaf_dirs = find_leaf_dirs(args.path.clone())?;
+        let mut leaf_dirs_iter = leaf_dirs.iter().peekable();
+        while let Some(dir) = leaf_dirs_iter.next() {
+            run_staggered_backup(dir, &args)?;
+            if leaf_dirs_iter.peek().is_some() {
+                println!("\n");
+            }
+        }
+    }
+
+    Ok(())
+}
+
+pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
+    let files = read_dir_or_fail(path, Some(FileType::File)).context("Failed to read files")?;
+    let mut files_by_date = BTreeMap::new();
+    println!("═══════════════════════════════════════════════════════════════");
+    print_headline_table(format!("Checking folder: {path:?}"));
     // Go through all files and extract the datetime from its filename.
     for file in files {
         let name = file
             .path()
-            .file_stem()
+            .file_name()
             .context(format!("Got file without filename: {:?}", file.path()))?
             .to_string_lossy()
             .to_string();
@@ -110,6 +138,10 @@ fn main() -> Result<()> {
         };
 
         files_by_date.insert(datetime, file);
+    }
+    if files_by_date.is_empty() {
+        println!("No files for backup found.");
+        return Ok(());
     }
 
     let mut brackets = init_brackets()?;
@@ -144,7 +176,11 @@ fn main() -> Result<()> {
                     break 'inner;
                 } else if entry_date > end_of_bracket {
                     bail!(
-                        "Encountered file that's somehow in the future: {entry_date:?} > {end_of_bracket:?}"
+                        "Encountered file that's somehow in the future for {} bracket ({:?} - {:?}):\n Entry date: {:?}",
+                        bracket.description,
+                        bracket.start_date,
+                        end_of_bracket,
+                        entry_date
                     )
                 }
             }
@@ -156,34 +192,45 @@ fn main() -> Result<()> {
 
     // Now delete all but the very first entry on each bracket.
     // So we keep
-    // - One backup per day for the first 30 days
-    // - One backup per week (usually monday) for 26 weeks.
-    // - One backup per month (usually the 1st) for 2 years.
+    // - One backup per day
+    // - One backup per week
+    // - One backup per month
+    let mut final_entries = Vec::new();
+    println!("\nREMOVED FILES:");
+    let mut table = pretty_table();
+    table.set_header(vec!["bracket", "bracket start", "filename"]);
     for bracket in brackets.into_iter() {
         let mut entries_iter = bracket.entries.into_iter();
         // Keep the very first entry.
         if let Some((_, entry)) = entries_iter.next() {
-            debug!(
-                "Keeping backup {:?} for {} bracket {:?}",
-                entry.file_name(),
-                bracket.description,
-                bracket.start_date,
-            )
+            final_entries.push((entry, bracket.description, bracket.start_date));
         }
 
         for (_, entry) in entries_iter {
-            info!(
-                "Removing file {:?} for {} bracket {:?}",
-                entry.file_name(),
-                bracket.description,
-                bracket.start_date,
-            );
+            table.add_row(vec![
+                bracket.description.to_string(),
+                format!("{:?}", bracket.start_date),
+                entry.file_name().to_string_lossy().to_string(),
+            ]);
             if args.execute {
                 remove_file(entry.path())
                     .context(format!("Failed to remove file: {:?}", entry.path()))?;
             }
         }
     }
+    println!("{table}");
+
+    println!("\nREMAINING FILES:");
+    let mut table = pretty_table();
+    table.set_header(vec!["bracket", "bracket start", "filename"]);
+    for (entry, desc, date) in final_entries {
+        table.add_row(vec![
+            desc.to_string(),
+            format!("{date:?}"),
+            entry.file_name().to_string_lossy().to_string(),
+        ]);
+    }
+    println!("{table}");
 
     Ok(())
 }
@@ -208,47 +255,55 @@ impl Bracket {
     }
 }
 
+// The amount of days/weeks/months that should be tracked.
+// There's an overlap of these brackets.
+// For 30 days, 26 weeks and 24 months it would look roughly like this:
+// 30 daily brackets (smallest unit)
+// 26 - floor(30 / 7) = 22 weekly brackets
+// 24 - floor(26 * 7 / 30) = 18 monthly brackets
+const DAY_BRACKETS: u64 = 30;
+const WEEK_BRACKETS: u64 = 26;
+const MONTH_BRACKETS: u64 = 24;
+
 fn init_brackets() -> Result<Vec<Bracket>> {
     let mut brackets = Vec::new();
-    let today = Utc::now().date_naive();
-    // Create daily brackets for the last 30 days
-    for days_back in 0..30 {
-        let bracket_start = today
-            .checked_sub_days(Days::new(days_back))
-            .context(format!("Failed to subtract {days_back} days from today"))?;
-
-        brackets.push(Bracket::new(bracket_start, 0, "daily"));
+    let mut last_daily_bracket = Utc::now().date_naive();
+    // Create daily brackets
+    for _ in 0..DAY_BRACKETS {
+        brackets.push(Bracket::new(last_daily_bracket, 0, "daily"));
+        last_daily_bracket = last_daily_bracket
+            .checked_sub_days(Days::new(1))
+            .context(format!(
+                "Failed to go back one day from {last_daily_bracket:?}"
+            ))?;
     }
 
-    // Create weekly brackets for the last 22 weeks (half a year - ~30 days)
-    let one_month_back = today
-        .checked_sub_days(Days::new(30))
-        .context("Failed to subtract 30 days from today")?;
-    let monday_of_first_week = one_month_back
+    // Create weekly brackets for half a year. Start where the daily brackets end.
+    let mut last_weekly_bracket = last_daily_bracket
         .checked_sub_days(Days::new(
-            one_month_back.weekday().number_from_monday().into(),
+            last_daily_bracket.weekday().num_days_from_monday().into(),
         ))
         .context("Failed to get start of week")?;
-    for weeks_back in 0..22 {
-        let bracket_start = monday_of_first_week
-            .checked_sub_days(Days::new(7 * weeks_back))
-            .context("Failed to subtract several weeks back")?;
 
-        brackets.push(Bracket::new(bracket_start, 7, "weekly"));
+    let weekly_brackets = WEEK_BRACKETS - (DAY_BRACKETS as f64 / 7.0).floor() as u64;
+    for _ in 0..weekly_brackets {
+        brackets.push(Bracket::new(last_weekly_bracket, 6, "weekly"));
+        last_weekly_bracket = last_weekly_bracket
+            .checked_sub_days(Days::new(7))
+            .context("Failed to subtract several weeks back")?;
     }
 
-    // Create monthly brackets for 19 months (2 years - ~22 weeks. A bit of overlap to be safe).
+    // Create monthly brackets for 24 months. Start where the weekly brackets end.
     // This is a bit more involved as months differ in length.
     // For this, we save the start of the last month in each iteration.
-    let half_year_back = today
-        .checked_sub_days(Days::new(26 * 7))
-        .context("Failed to go half a year back")?;
+    let mut start_of_month = last_weekly_bracket
+        .checked_sub_days(Days::new(last_weekly_bracket.day0().into()))
+        .context(format!(
+            "Failed to get start of month for {last_weekly_bracket}"
+        ))?;
 
-    let mut start_of_month = half_year_back
-        .checked_sub_days(Days::new(half_year_back.day0().into()))
-        .context(format!("Failed to get start of month for {half_year_back}"))?;
-
-    for _ in 0..19 {
+    let monthly_brackets = MONTH_BRACKETS - (WEEK_BRACKETS as f64 * 7.0 / 30.0).floor() as u64;
+    for _ in 0..monthly_brackets {
         let last_day_of_month = start_of_month
             .checked_add_months(Months::new(1))
             .unwrap()

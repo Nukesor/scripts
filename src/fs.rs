@@ -108,4 +108,37 @@ pub mod file {
 
         Ok(path)
     }
+
+    /// Walk through the file tree and search for **directory** leaves.
+    pub fn find_leaf_dirs(path: PathBuf) -> Result<Vec<PathBuf>> {
+        let mut search_stack = Vec::new();
+        search_stack.push(path);
+        let mut leaf_dirs = Vec::new();
+
+        while let Some(path) = search_stack.pop() {
+            let dir = std::fs::read_dir(&path)?;
+            // A flag whether this dir contains another dir.
+            // If it doesn't we push it to the leaf_dirs after the for loop.
+            let mut found_sub_dir = false;
+
+            for entry_result in dir.into_iter() {
+                let entry = entry_result?;
+
+                let file_type = entry
+                    .file_type()
+                    .context(format!("Failed to read file type for {:?}", entry.path()))?;
+
+                if file_type.is_dir() {
+                    found_sub_dir = true;
+                    search_stack.push(entry.path());
+                }
+            }
+
+            if !found_sub_dir {
+                leaf_dirs.push(path);
+            }
+        }
+
+        Ok(leaf_dirs)
+    }
 }

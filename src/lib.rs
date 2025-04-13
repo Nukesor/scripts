@@ -7,6 +7,7 @@ pub mod notify;
 pub mod pipewire;
 pub mod process;
 pub mod ring;
+pub mod table;
 
 pub use anyhow::{Context, Result, anyhow, bail};
 pub use fs::{FileType, get_newest_file, path_exists, read_dir_or_fail};
