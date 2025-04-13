@@ -24,7 +24,8 @@ use std::{
 use anyhow::{Context, Result, bail};
 use chrono::{Datelike, Days, Months, NaiveDate, NaiveDateTime, TimeDelta, Utc};
 use clap::{ArgAction, Parser};
-use log::{debug, info, warn};
+use log::{debug, error, info};
+use regex::Regex;
 use script_utils::{FileType, logging, read_dir_or_fail};
 
 #[derive(Parser, Debug)]
@@ -41,19 +42,25 @@ pub struct CliArguments {
     /// The path that contains the backup files.
     pub path: PathBuf,
 
+    /// Regex that extracts the matching `date_format` string from a filename.
+    /// The default extracts
+    /// "2025-04-02_00-00" from something like
+    /// "some_game_name_2025-04-02_00-00.tar.zst"
+    #[clap(
+        short,
+        long,
+        default_value = r"[a-z_]*_([0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2})\..*"
+    )]
+    pub date_extraction_regex: String,
+
     /// The date format string that's used in the filename
     /// E.g. "%Y-%m-%d_%H-%M" for "2025-04-02_00-00.dump"
     #[clap(short, long, default_value = "%Y-%m-%d_%H-%M")]
-    pub format: String,
+    pub date_format: String,
 
-    /// The file name prefix before the date is hit.
-    /// E.g. "mydb_" for "mydb_2025-04-02_00-00.dump"
-    #[clap(short, long, default_value = "")]
-    pub prefix: String,
-
-    /// Don't do any operations, just print what would happen.
+    /// Don't do any operations unless this flag is set
     #[clap(short, long)]
-    pub dry_run: bool,
+    pub execute: bool,
 }
 
 fn main() -> Result<()> {
@@ -70,39 +77,37 @@ fn main() -> Result<()> {
         "Running staggered backup cleanup for folder: {:?}",
         args.path
     );
-    if args.dry_run {
+    if !args.execute {
         println!("--- DRY RUN MODE ---");
     }
 
-    let prefix = args.prefix;
+    // Go through all files and extract the datetime from its filename.
     for file in files {
-        let mut name = file
+        let name = file
             .path()
             .file_stem()
             .context(format!("Got file without filename: {:?}", file.path()))?
             .to_string_lossy()
             .to_string();
 
-        // Make sure to enforce the prefix if there's one.
-        if !prefix.is_empty() && !name.starts_with(&prefix) {
-            warn!(
-                "Prefix doesn't match. Skipping file: {:?}",
-                file.file_name()
-            );
-
+        // Run the date extraction regex
+        let re = Regex::new(&args.date_extraction_regex).context(format!(
+            "Found invalid date_extraction_regex: {}",
+            args.date_extraction_regex
+        ))?;
+        let Some(captures) = re.captures(&name) else {
+            error!("Date extraction regex didn't match name. Ignoring file: {name}");
             continue;
-        } else if !prefix.is_empty() {
-            name = name
-                .strip_prefix(&prefix)
-                .context(format!(
-                    "File only consisted of prefix: {:?}",
-                    file.file_name()
-                ))?
-                .to_owned();
-        }
+        };
 
-        let datetime = NaiveDateTime::parse_from_str(&name, &args.format)
-            .context(format!("Failed to parse date string: {name}"))?;
+        let datetime = NaiveDateTime::parse_from_str(&captures[1], &args.date_format);
+        let datetime = match datetime {
+            Ok(datetime) => datetime,
+            Err(_) => {
+                error!("Failed to parse date string. Ignoring file: {name}");
+                continue;
+            }
+        };
 
         files_by_date.insert(datetime, file);
     }
@@ -173,7 +178,7 @@ fn main() -> Result<()> {
                 bracket.description,
                 bracket.start_date,
             );
-            if !args.dry_run {
+            if args.execute {
                 remove_file(entry.path())
                     .context(format!("Failed to remove file: {:?}", entry.path()))?;
             }
