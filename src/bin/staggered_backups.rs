@@ -59,7 +59,8 @@ pub struct CliArguments {
 fn main() -> Result<()> {
     // Parse commandline options.
     let args = CliArguments::parse();
-    logging::init_logger(args.verbose);
+    // Min log level INFO
+    logging::init_logger(args.verbose + 2);
 
     let files =
         read_dir_or_fail(&args.path, Some(FileType::File)).context("Failed to read files")?;
