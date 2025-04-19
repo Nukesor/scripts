@@ -293,9 +293,9 @@ fn init_brackets() -> Result<Vec<Bracket>> {
             .context("Failed to subtract several weeks back")?;
     }
 
-    // Create monthly brackets for 24 months. Start where the weekly brackets end.
-    // This is a bit more involved as months differ in length.
-    // For this, we save the start of the last month in each iteration.
+    // Create monthly brackets for 24 months and start in the month the weekly brackets end.
+    // This whole thing is a bit more involved as months differ in length.
+    // We save the start of the last month in each iteration, subtract a day
     let mut start_of_month = last_weekly_bracket
         .checked_sub_days(Days::new(last_weekly_bracket.day0().into()))
         .context(format!(
@@ -304,6 +304,7 @@ fn init_brackets() -> Result<Vec<Bracket>> {
 
     let monthly_brackets = MONTH_BRACKETS - (WEEK_BRACKETS as f64 * 7.0 / 30.0).floor() as u64;
     for _ in 0..monthly_brackets {
+        // Go one month in future and one day back to get last day of current month.
         let last_day_of_month = start_of_month
             .checked_add_months(Months::new(1))
             .unwrap()
