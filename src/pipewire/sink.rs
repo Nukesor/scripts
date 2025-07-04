@@ -43,7 +43,7 @@ pub fn get_sinks() -> Result<Vec<Node>> {
             "Found device {}: {} ({})",
             props.object_serial, props.node_description, props.node_name
         );
-        trace!("Raw: {:#?}", node);
+        trace!("Raw: {node:#?}");
 
         valid_nodes.push(node);
     }

@@ -69,9 +69,8 @@ fn ack_file_path() -> Result<PathBuf> {
 fn start(start: usize, reminder_interval: usize) -> Result<()> {
     info!(
         "\n
-        User will be regularily notified every {} minutes.
-        They'll receive a follow-up notification every {} minutes\n",
-        start, reminder_interval,
+        User will be regularily notified every {start} minutes.
+        They'll receive a follow-up notification every {reminder_interval} minutes\n",
     );
 
     let mut last_stretch: DateTime<Utc> = Utc::now();

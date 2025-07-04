@@ -113,7 +113,7 @@ pub fn discover_repos(
     // Check if a .git directory exists.
     // If it does, always stop searching.
     let git_dir = path.join(".git");
-    debug!("{} Looking at folder {:?}", depths, path);
+    debug!("{depths} Looking at folder {path:?}");
     if git_dir.exists() {
         debug!("Found .git folder");
         // Add the repository, if we don't know it yet.
@@ -130,10 +130,7 @@ pub fn discover_repos(
     let current_dir = match read_dir(path) {
         Ok(current_dir) => current_dir,
         Err(err) => {
-            debug!(
-                "Couldn't read directory at {:?} with error: {:?}",
-                path, err
-            );
+            debug!("Couldn't read directory at {path:?} with error: {err:?}");
             return;
         }
     };
@@ -150,10 +147,7 @@ pub fn discover_repos(
                 discover_repos(&path, depths + 1, max_depth, excluded_dir, new_repos);
             }
             Err(err) => {
-                debug!(
-                    "Couldn't read directory path {:?} with error: {:?}",
-                    path, err
-                );
+                debug!("Couldn't read directory path {path:?} with error: {err:?}");
                 continue;
             }
         }
