@@ -1,0 +1,17 @@
+#!/bin/env bash
+
+# Literally that, nuke the postgres data folder and create it a new
+
+echo "Stopping postgres"
+sudo systemctl stop postgresql
+echo "Nuke and re-initialize postgres data folder"
+sudo rm -rf /var/lib/postgres/data
+sudo -u postgres initdb -D /var/lib/postgres/data --data-checksums --encoding=UTF8
+
+echo "Starting postgres"
+sudo systemctl start postgresql
+
+echo "Create Superuser nuke"
+sudo -u postgres createuser -s nuke
+echo "Create DB nuke"
+createdb nuke
