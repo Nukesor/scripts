@@ -40,6 +40,7 @@ pub struct CliArguments {
 // 2. Substrings of the binary we should look for.
 // 3. Whether we should warn the user if the threshold was exceeded.
 const GAME_LIST: &[(&str, &str, bool)] = &[
+    ("Oxygen Not Included", "OxygenNotIncluded", true),
     ("Factorio", "factorio", true),
     ("Noita", "noita", true),
     ("Apex Legends", "apex", false),
