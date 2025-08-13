@@ -1,10 +1,14 @@
 use std::collections::{HashMap, HashSet};
 
 use anyhow::Result;
-use chrono::{DateTime, Local};
 use clap::{ArgAction, Parser};
 use log::{debug, info};
-use script_utils::{logging, notify::*, process::get_process_cmdlines};
+use script_utils::{
+    logging,
+    notify::*,
+    process::get_process_cmdlines,
+    timer::{Phase, PhaseTimer},
+};
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -48,19 +52,54 @@ const GAME_LIST: &[(&str, &str, bool)] = &[
     ("Zero Sievert", "zero sievert.exe", true),
 ];
 
-struct RunningGame {
-    start: DateTime<Local>,
-    notification_count: i64,
-    stop_notification_count: i64,
+#[derive(Debug, Clone, PartialEq)]
+pub enum GameAction {
+    RegularNotification,
+    StopNotification,
 }
 
-impl Default for RunningGame {
-    fn default() -> Self {
-        Self {
-            start: Local::now(),
-            notification_count: 0,
-            stop_notification_count: 0,
+struct RunningGame {
+    timer: PhaseTimer<GameAction>,
+}
+
+impl RunningGame {
+    fn new(
+        notification_interval: i64,
+        threshold: i64,
+        stop_notification_interval: i64,
+        strict: bool,
+    ) -> Self {
+        let mut phases = vec![];
+
+        // Add regular notification phase (recurring from start if interval > 0)
+        if notification_interval > 0 {
+            phases.push(Phase::recurring(
+                notification_interval as usize,
+                notification_interval as usize,
+                GameAction::RegularNotification,
+            ));
         }
+
+        // Add stop notification phase (recurring from threshold if strict)
+        if strict && stop_notification_interval > 0 {
+            phases.push(Phase::recurring(
+                threshold as usize,
+                stop_notification_interval as usize,
+                GameAction::StopNotification,
+            ));
+        }
+
+        Self {
+            timer: PhaseTimer::new(phases),
+        }
+    }
+
+    fn elapsed_minutes(&self) -> usize {
+        self.timer.elapsed_minutes()
+    }
+
+    fn calculate_action(&mut self) -> Option<GameAction> {
+        self.timer.calculate_action()
     }
 }
 
@@ -120,53 +159,35 @@ fn handle_running_game(
     name: &'static str,
     strict: bool,
 ) -> Result<()> {
-    let running_game = running_games.entry(name).or_default();
-    let now = Local::now();
+    let running_game = running_games.entry(name).or_insert_with(|| {
+        RunningGame::new(
+            args.notification_interval,
+            args.threshold,
+            args.stop_notification_interval,
+            strict,
+        )
+    });
 
-    // Calculate the amount of minutes since we first saw that game running.
-    let elapsed_minutes = (now - running_game.start).num_minutes();
-
-    //
-    // The user is still allowed to play. But we might notify them anyway.
-    //
-    if elapsed_minutes < args.threshold || !strict {
-        debug!("Below threshold or not strict");
-        // Calculate the current interval we're in.
-        let current_interval = elapsed_minutes / args.notification_interval;
-
-        // Send the user a notification if we're in a new interval.
-        if running_game.notification_count < current_interval {
-            let time_string = format_duration(elapsed_minutes);
-            info!("Sending normal notification for {name} at {time_string}");
-            notify(
-                10 * 1000,
-                format!("You have been playing {name} for {time_string}"),
-            )?;
-        }
-        running_game.notification_count = current_interval;
-
-        return Ok(());
-    }
-
-    //
-    // The user should really stop to play now.
-    //
-
-    debug!("Above threshold and strict.");
-    // Calculate the current stop interval we're in.
-    let current_interval =
-        ((elapsed_minutes - args.threshold) / args.stop_notification_interval) + 1;
-
-    // Send the user a notification if we're in a new interval.
-    if running_game.stop_notification_count < current_interval {
+    if let Some(action) = running_game.calculate_action() {
+        let elapsed_minutes = running_game.elapsed_minutes() as i64;
         let time_string = format_duration(elapsed_minutes);
 
-        info!("Sending stop notification for {name} at {time_string}");
-        critical_notify(
-            300 * 1000,
-            format!("Stop playing {name}. You are at it since {time_string}"),
-        )?;
-        running_game.stop_notification_count = current_interval;
+        match action {
+            GameAction::RegularNotification => {
+                info!("Sending normal notification for {name} at {time_string}");
+                notify(
+                    10 * 1000,
+                    format!("You have been playing {name} for {time_string}"),
+                )?;
+            }
+            GameAction::StopNotification => {
+                info!("Sending stop notification for {name} at {time_string}");
+                critical_notify(
+                    300 * 1000,
+                    format!("Stop playing {name}. You are at it since {time_string}"),
+                )?;
+            }
+        }
     }
 
     Ok(())
