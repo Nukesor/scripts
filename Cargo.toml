@@ -40,3 +40,6 @@ strum = { version = "0.27", features = ["derive"] }
 subprocess = "0.2"
 tera = "1"
 users = "0.11"
+
+[dev-dependencies]
+rstest = "0.23"

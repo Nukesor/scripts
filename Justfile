@@ -9,6 +9,9 @@ format:
     cargo +nightly fmt
     taplo format
 
+test:
+    cargo test
+
 # Ensures that one or more required commands are installed
 ensure-command +command:
     #!/usr/bin/env bash
