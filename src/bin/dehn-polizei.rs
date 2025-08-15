@@ -22,7 +22,7 @@ pub enum StretchAction {
 #[derive(Parser, Debug)]
 #[clap(
     name = "Dehn-Polizei",
-    about = "A little background daemon which notifies the user that they should do some stretching",
+    about = "A little background daemon which notifies me that I should do some stretching",
     author = "Arne Beer <contact@arne.beer>"
 )]
 pub struct CliArguments {
@@ -78,9 +78,8 @@ fn ack_file_path() -> Result<PathBuf> {
 fn start(stretch_interval: usize, reminder_interval: usize) -> Result<()> {
     info!(
         "\n
-        User will be regularly notified every {} minutes.
-        They'll receive a follow-up notification every {} minutes\n",
-        stretch_interval, reminder_interval
+        User will be regularly notified every {stretch_interval} minutes.
+        They'll receive a follow-up notification every {reminder_interval} minutes\n",
     );
 
     let phases = vec![
@@ -113,8 +112,7 @@ fn start(stretch_interval: usize, reminder_interval: usize) -> Result<()> {
                 StretchAction::Initial { stretch_interval } => {
                     info!("Sending initial stretch notification");
                     let message = format!(
-                        "You have been working for {} minutes.\nTime for a stretch\\!\\!",
-                        stretch_interval
+                        "You have been working for {stretch_interval} minutes.\nTime for a stretch\\!\\!",
                     );
                     notify(20 * 1000, message)?;
                 }
@@ -123,8 +121,7 @@ fn start(stretch_interval: usize, reminder_interval: usize) -> Result<()> {
                 } => {
                     info!("Sending stretch reminder");
                     let overdue_minutes = timer.elapsed_minutes() - stretch_interval;
-                    let message =
-                        format!("You are {} minutes overdue! Go stretch!", overdue_minutes);
+                    let message = format!("You are {overdue_minutes} minutes overdue! Go stretch!");
                     critical_notify(40 * 1000, message)?;
                 }
             }
