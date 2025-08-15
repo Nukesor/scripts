@@ -99,8 +99,8 @@ impl RunningGame {
         self.timer.elapsed_minutes()
     }
 
-    fn calculate_action(&mut self) -> Option<GameAction> {
-        self.timer.calculate_action()
+    fn check(&mut self) -> Option<GameAction> {
+        self.timer.check()
     }
 }
 
@@ -169,7 +169,7 @@ fn handle_running_game(
         )
     });
 
-    if let Some(action) = running_game.calculate_action() {
+    if let Some(action) = running_game.check() {
         let elapsed_minutes = running_game.elapsed_minutes() as i64;
         let time_string = format_duration(elapsed_minutes);
 
