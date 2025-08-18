@@ -169,7 +169,7 @@ impl<T: Clone> PhaseTimer<T> {
 
                 // Check if enough time has passed for the next trigger
                 if minutes_since_start >= next_trigger_minute {
-                    *last_action_minute = minutes_since_start;
+                    *last_action_minute = next_trigger_minute;
                     true
                 } else {
                     false
