@@ -19,6 +19,8 @@ pub enum PhaseType {
         /// The last time when this phase triggered.
         /// Measured in minutes from `PhaseTimer.start_time`
         last_action_minute: usize,
+        /// If true, the phase won't trigger at the start time but waits for the first interval
+        delayed: bool,
     },
 }
 
@@ -51,6 +53,20 @@ impl<T> Phase<T> {
             phase_type: PhaseType::Recurring {
                 interval,
                 last_action_minute: 0,
+                delayed: false,
+            },
+            action,
+            trigger_at_minute: trigger_time,
+        }
+    }
+
+    /// Create a delayed recurring phase that waits for the first interval before triggering
+    pub fn recurring_delayed(trigger_time: usize, interval: usize, action: T) -> Self {
+        Self {
+            phase_type: PhaseType::Recurring {
+                interval,
+                last_action_minute: 0,
+                delayed: true,
             },
             action,
             trigger_at_minute: trigger_time,
@@ -187,11 +203,17 @@ impl<T: Clone> PhaseTimer<T> {
             PhaseType::Recurring {
                 interval,
                 last_action_minute,
+                delayed,
             } => {
                 // Calculate the next expected trigger time based on the last action
                 let next_trigger_minute = if *last_action_minute == 0 {
-                    // First trigger - use the phase's trigger time
-                    phase.trigger_at_minute
+                    if *delayed {
+                        // First trigger for delayed phase - wait for interval after trigger time
+                        phase.trigger_at_minute + *interval
+                    } else {
+                        // First trigger - use the phase's trigger time
+                        phase.trigger_at_minute
+                    }
                 } else {
                     // Subsequent triggers - add interval to last action time
                     *last_action_minute + *interval
@@ -213,8 +235,8 @@ impl<T: Clone> PhaseTimer<T> {
         (Utc::now() - self.start_time).num_minutes() as usize
     }
 
-    #[cfg(test)]
     /// Test helper to simulate timer behavior at a specific time
+    #[cfg(test)]
     fn action_at_time(&mut self, minutes: usize) -> Option<T> {
         // Temporarily modify start_time to simulate the specified elapsed time
         let original_start = self.start_time;
@@ -225,6 +247,12 @@ impl<T: Clone> PhaseTimer<T> {
         // Restore original start time
         self.start_time = original_start;
         result
+    }
+
+    /// Return the current phase
+    #[cfg(test)]
+    pub fn current_phase(&self) -> &Phase<T> {
+        &self.current_phase
     }
 }
 
@@ -354,5 +382,41 @@ mod tests {
         // Verify the timer works normally after reset
         let action = timer.action_at_time(10);
         assert_eq!(action, Some(TestAction::Reminder));
+    }
+
+    #[test]
+    fn delayed_recurring_phase() {
+        // Test the dehn-polizei scenario: one-time at 90min, delayed recurring starts at 90min but
+        // first triggers at 100min
+        let phases = vec![
+            Phase::one_time(90, TestAction::Initial),
+            Phase::recurring_delayed(90, 10, TestAction::Reminder),
+        ];
+        let mut timer = PhaseTimer::new(phases);
+
+        // No action before first phase
+        assert_eq!(timer.action_at_time(89), None);
+
+        // One-time phase triggers at 90 minutes
+        assert_eq!(timer.action_at_time(90), Some(TestAction::Initial));
+
+        // No action between phases - delayed recurring waits for interval
+        assert_eq!(timer.action_at_time(95), None);
+        assert!(
+            matches!(
+                timer.current_phase().phase_type,
+                PhaseType::Recurring { .. }
+            ),
+            "We should've entered the recurring phase"
+        );
+
+        // Delayed recurring phase first triggers at 100 minutes (90 + 10 interval)
+        assert_eq!(timer.action_at_time(100), Some(TestAction::Reminder));
+
+        // No action before next interval
+        assert_eq!(timer.action_at_time(105), None);
+
+        // Next recurring trigger at 110 minutes
+        assert_eq!(timer.action_at_time(110), Some(TestAction::Reminder));
     }
 }

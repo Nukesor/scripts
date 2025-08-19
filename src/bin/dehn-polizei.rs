@@ -87,7 +87,7 @@ fn start(stretch_interval: usize, reminder_interval: usize) -> Result<()> {
             stretch_interval,
             StretchAction::Initial { stretch_interval },
         ),
-        Phase::recurring(
+        Phase::recurring_delayed(
             stretch_interval,
             reminder_interval,
             StretchAction::Reminder { reminder_interval },
