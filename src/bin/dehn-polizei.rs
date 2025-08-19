@@ -107,7 +107,7 @@ fn start(stretch_interval: usize, reminder_interval: usize) -> Result<()> {
             continue;
         }
 
-        if let Some(action) = timer.check() {
+        if let Some(action) = timer.check_with_sleep_detection() {
             match action {
                 StretchAction::Initial { stretch_interval } => {
                     info!("Sending initial stretch notification");

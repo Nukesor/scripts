@@ -100,7 +100,7 @@ impl RunningGame {
     }
 
     fn check(&mut self) -> Option<GameAction> {
-        self.timer.check()
+        self.timer.check_with_sleep_detection()
     }
 }
 

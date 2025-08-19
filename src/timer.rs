@@ -5,7 +5,8 @@
 
 use std::{iter::Peekable, vec::IntoIter};
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
+use log::info;
 
 /// Defines the behavior of a timer phase
 #[derive(Debug, Clone)]
@@ -71,6 +72,7 @@ pub struct PhaseTimer<T> {
     phases: Peekable<IntoIter<Phase<T>>>,
     current_phase: Phase<T>,
     start_time: DateTime<Utc>,
+    last_check_time: Option<DateTime<Utc>>,
 }
 
 impl<T: Clone> PhaseTimer<T> {
@@ -94,6 +96,7 @@ impl<T: Clone> PhaseTimer<T> {
             phases,
             current_phase,
             start_time: Utc::now(),
+            last_check_time: None,
         }
     }
 
@@ -113,6 +116,7 @@ impl<T: Clone> PhaseTimer<T> {
         self.phases = phases;
         self.current_phase = current_phase;
         self.start_time = Utc::now();
+        self.last_check_time = None;
     }
 
     /// Check if a phase should trigger right now.
@@ -135,6 +139,32 @@ impl<T: Clone> PhaseTimer<T> {
         }
 
         None
+    }
+
+    /// Check if a phase should trigger right now, with automatic sleep detection and reset.
+    ///
+    /// If so, the respective action will be returned.
+    ///
+    /// If more than 30 minutes have passed since the last check, the timer assumes the
+    /// machine went to sleep and automatically resets the timer.
+    pub fn check_with_sleep_detection(&mut self) -> Option<T> {
+        let now = Utc::now();
+
+        // Check for sleep if we have a previous check time
+        if let Some(last_check) = self.last_check_time {
+            let time_since_check = now - last_check;
+            if time_since_check > Duration::minutes(30) {
+                info!(
+                    "Sleep detected ({}min gap), resetting timer",
+                    time_since_check.num_minutes()
+                );
+                self.reset();
+            }
+        }
+
+        // Only set the last_check_time in here, as the `check()` call doesn't use this logic.
+        self.last_check_time = Some(now);
+        self.check()
     }
 
     /// Check if a phase should trigger at the given time.
@@ -287,5 +317,42 @@ mod tests {
         // Should trigger again after reset
         let action = timer.action_at_time(90);
         assert_eq!(action, Some(TestAction::Initial));
+    }
+
+    #[test]
+    fn detects_sleep_and_resets_timer() {
+        let phases = vec![Phase::recurring(10, 10, TestAction::Reminder)];
+        let mut timer = PhaseTimer::new(phases);
+
+        // First trigger at 10 minutes
+        let action = timer.action_at_time(10);
+        assert_eq!(action, Some(TestAction::Reminder));
+
+        // Simulate normal check at 15 minutes (no action expected)
+        timer.last_check_time = Some(Utc::now() - chrono::Duration::minutes(15));
+        let action = timer.check_with_sleep_detection();
+        assert_eq!(action, None);
+
+        // Simulate sleep: set last_check_time to 35 minutes ago
+        timer.last_check_time = Some(Utc::now() - chrono::Duration::minutes(35));
+
+        // This should detect sleep and reset the timer
+        let action = timer.check_with_sleep_detection();
+
+        // After reset, we should be at the beginning of the timer
+        // No immediate action since we're starting fresh
+        assert_eq!(action, None);
+
+        // Verify timer was actually reset by checking the start time is recent
+        let minutes_since_start = timer.elapsed_minutes();
+        assert!(
+            minutes_since_start < 2,
+            "Timer should have been reset, but elapsed time is {}",
+            minutes_since_start
+        );
+
+        // Verify the timer works normally after reset
+        let action = timer.action_at_time(10);
+        assert_eq!(action, Some(TestAction::Reminder));
     }
 }
