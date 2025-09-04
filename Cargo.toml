@@ -28,7 +28,7 @@ image = { version = "0.25", features = [
   "rayon",
 ], default-features = false }
 log = "0.4"
-procfs = { version = "0.17", default-features = false }
+procfs = { version = "0.18", default-features = false }
 rayon = "1"
 regex = "1"
 serde = { version = "1", features = ["derive"] }
@@ -42,4 +42,4 @@ tera = "1"
 users = "0.11"
 
 [dev-dependencies]
-rstest = "0.23"
+rstest = "0.26"
