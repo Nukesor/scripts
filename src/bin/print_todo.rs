@@ -1,6 +1,6 @@
 //! This script prints a minimal summary of my todo list.
 //! It's designed for use in a status bar.
-use std::{fs::read_to_string, path::PathBuf, str::Lines};
+use std::{fs::read_to_string, path::PathBuf};
 
 use anyhow::Result;
 use clap::Parser;
@@ -14,8 +14,79 @@ pub struct CliArguments {
 }
 
 #[derive(Serialize, Debug)]
-pub struct I3StatusCustom {
+pub struct Output {
     text: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    tooltip: String,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct Todo {
+    pub name: String,
+    pub items: Vec<Item>,
+}
+
+impl Todo {
+    pub fn new(name: String) -> Self {
+        Self {
+            name,
+            items: Vec::new(),
+        }
+    }
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct Item {
+    pub name: String,
+    pub completed: bool,
+}
+
+impl Item {
+    pub fn new(name: String, completed: bool) -> Self {
+        Self { name, completed }
+    }
+}
+
+pub fn todos_as_i3bar_output(_todos: Vec<Todo>) -> Output {
+    let text = String::new();
+
+    Output {
+        text,
+        tooltip: String::new(),
+    }
+}
+
+pub fn todos_as_waybar_output(todos: Vec<Todo>) -> Output {
+    let mut text = String::new();
+    let mut tooltip = String::new();
+
+    let todo_count = todos.len();
+    if todo_count == 0 {
+        text.push_str("Neat :3")
+    } else {
+        text = format!("{todo_count} todos")
+    }
+
+    for todo in todos {
+        tooltip.push_str(" ");
+        tooltip.push_str(&todo.name);
+        for item in todo.items {
+            tooltip.push('\r');
+            if item.completed {
+                tooltip.push('');
+            } else {
+                tooltip.push('󱘹');
+            }
+            tooltip.push_str(&item.name);
+        }
+        tooltip.push('\r');
+        tooltip.push('\r');
+    }
+
+    println!("{text}");
+    println!("{tooltip}");
+
+    Output { text, tooltip }
 }
 
 /// Simply read a file and print a few lines of output
@@ -28,24 +99,12 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let mut output = String::new();
     let content = read_to_string(args.path).context("Failed to read file")?;
-    let mut lines = content.lines();
+    let todos = handle_todo_items(content);
 
-    let mut next_todo = lines
-        .find(|line| line.starts_with('#'))
-        .map(|line| line.to_string());
-
-    while let Some(headline) = next_todo {
-        next_todo = handle_todo_items(&headline, &mut lines, &mut output);
-    }
-
-    if output.trim().is_empty() {
-        output = "Nothing to do :)".to_string();
-    }
+    let output = todos_as_waybar_output(todos);
 
     // Send the expected json output to i3status
-    let output = I3StatusCustom { text: output };
     println!("{}", serde_json::to_string(&output)?);
 
     Ok(())
@@ -55,46 +114,41 @@ fn main() -> Result<()> {
 /// For example, the amount items that were completed.
 ///
 /// Retuns the next todo headline, we hit one.
-fn handle_todo_items(headline: &str, lines: &mut Lines, output: &mut String) -> Option<String> {
-    // First things first, append the name of the todo.
-    if let Some(headline) = headline.strip_prefix('#') {
-        output.push_str(headline.trim());
-    }
+fn handle_todo_items(content: String) -> Vec<Todo> {
+    let mut todos = Vec::new();
 
-    let mut items: usize = 0;
-    let mut completed_items: usize = 0;
-    for line in lines {
-        // We found the next todo. Abort.
+    let mut todo: Option<Todo> = None;
+    for line in content.lines() {
+        let line = line.trim();
         if line.starts_with('#') {
-            // Add the current item counter and a comma for todo separation.
-            add_item_count(output, items, completed_items);
-            output.push_str(", ");
-            return Some(line.to_string());
-        }
-
-        // We found an unfinished item
-        if line.trim().starts_with('-') && !line.trim().starts_with("- [x]") {
-            items += 1;
-            continue;
-        }
-
-        // We found a finished item
-        if line.trim().starts_with("- [x]") {
-            items += 1;
-            completed_items += 1;
+            // We found a new todo
+            // If we already have one, save it to the list before starting a new one.
+            if let Some(todo) = &todo {
+                todos.push(todo.clone());
+            }
+            let name = line.strip_prefix('#').unwrap_or_default().trim();
+            todo = Some(Todo::new(name.into()));
+        } else if let Some(ref mut todo) = todo {
+            if line.starts_with('-') && !line.starts_with("- [x]") {
+                let name = line
+                    .strip_prefix("- [ ]")
+                    .or(line.strip_prefix("- []"))
+                    .or(line.strip_prefix("-"))
+                    .unwrap();
+                todo.items.push(Item::new(name.to_string(), false));
+            } else if line.starts_with("- [x]") {
+                let name = line
+                    .strip_prefix("- [x]")
+                    .or(line.strip_prefix("-[x]"))
+                    .unwrap();
+                todo.items.push(Item::new(name.to_string(), true));
+            }
         }
     }
 
-    add_item_count(output, items, completed_items);
-
-    None
-}
-
-/// Add an item counter, depending on the item counts.
-fn add_item_count(output: &mut String, total: usize, completed: usize) {
-    if completed > 0 {
-        output.push_str(&format!(" ({completed}/{total})"))
-    } else if total > 0 {
-        output.push_str(&format!(" ({total})"))
+    if let Some(todo) = todo {
+        todos.push(todo);
     }
+
+    todos
 }
