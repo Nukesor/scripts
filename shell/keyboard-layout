@@ -4,6 +4,8 @@ set -euo pipefail
 language=$1
 languages="de en toggle"
 
+state_file="${XDG_RUNTIME_DIR}"/keyboard_layout
+
 if [[ ! " ${languages} " == *" $1 "* ]]; then
     echo "Invalid language."
     echo "Valid languages are: $languages"
@@ -14,8 +16,7 @@ if [ "${language}" == "de" ]; then
     setxkbmap -layout de \
         -option caps:escape
 
-    mkdir -p "/tmp/$USER"
-    echo 'de' >"/tmp/$USER/keyboard_layout"
+    echo 'de' >$XDG_RUNTIME_DIR
     echo '{"icon":"keyboard","state":"Idle", "text": " de"}'
 elif [ "${language}" == "en" ]; then
     setxkbmap \
@@ -25,13 +26,15 @@ elif [ "${language}" == "en" ]; then
         -option lv3:ralt_switch \
         -option altwin:swap_lalt_lwin
 
-    mkdir -p "/tmp/$USER"
-    echo 'en' >"/tmp/$USER/keyboard_layout"
+    echo 'en' >$XDG_RUNTIME_DIR
     echo '{"icon": "keyboard","state": "Idle", "text": " en"}'
 
 elif [ "${language}" == "toggle" ]; then
     # Toggle to the other language, depending on the current layout
-    if [ "$(cat /tmp/$USER/keyboard_layout)" == "de" ]; then
+    # If no state file exists, switch to de
+    if [ ! -f $FILE ]; then
+        ~/.bin/keyboard-layout de
+    elif [ "$(cat $state_file)" == "de" ]; then
         ~/.bin/keyboard-layout en
     else
         ~/.bin/keyboard-layout de
