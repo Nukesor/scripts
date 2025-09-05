@@ -25,6 +25,7 @@ comfy-table = "7"
 image = { version = "0.25", features = [
   "png",
   "jpeg",
+  "webp",
   "rayon",
 ], default-features = false }
 log = "0.4"
