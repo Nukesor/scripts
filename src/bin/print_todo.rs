@@ -4,20 +4,13 @@ use std::{fs::read_to_string, path::PathBuf};
 
 use anyhow::Result;
 use clap::Parser;
-use script_utils::Context;
+use script_utils::{Context, i3status::CustomBarStatus};
 use serde::Serialize;
 
 #[derive(Parser, Debug)]
 pub struct CliArguments {
     /// The path to the todo markdown file.
     pub path: PathBuf,
-}
-
-#[derive(Serialize, Debug)]
-pub struct Output {
-    text: String,
-    #[serde(skip_serializing_if = "String::is_empty")]
-    tooltip: String,
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -47,16 +40,13 @@ impl Item {
     }
 }
 
-pub fn todos_as_i3bar_output(_todos: Vec<Todo>) -> Output {
+pub fn todos_as_i3bar_output(_todos: Vec<Todo>) -> CustomBarStatus {
     let text = String::new();
 
-    Output {
-        text,
-        tooltip: String::new(),
-    }
+    CustomBarStatus::new(text)
 }
 
-pub fn todos_as_waybar_output(todos: Vec<Todo>) -> Output {
+pub fn todos_as_waybar_output(todos: Vec<Todo>) -> CustomBarStatus {
     let mut text = String::new();
     let mut tooltip = String::new();
 
@@ -86,7 +76,10 @@ pub fn todos_as_waybar_output(todos: Vec<Todo>) -> Output {
     println!("{text}");
     println!("{tooltip}");
 
-    Output { text, tooltip }
+    let mut status = CustomBarStatus::new(text);
+    status.tooltip = tooltip;
+
+    status
 }
 
 /// Simply read a file and print a few lines of output

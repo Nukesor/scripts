@@ -1,32 +1,19 @@
 use serde::Serialize;
 
 #[derive(Serialize, Default)]
-pub struct CustomI3Status {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub icon: Option<String>,
-    pub state: I3State,
+pub struct CustomBarStatus {
     pub text: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub short_text: Option<String>,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub tooltip: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub class: String,
 }
 
-impl CustomI3Status {
-    pub fn new(state: I3State, text: String) -> Self {
+impl CustomBarStatus {
+    pub fn new(text: String) -> Self {
         Self {
-            state,
             text,
             ..Default::default()
         }
     }
-}
-
-#[derive(Serialize, Default)]
-#[serde(rename_all = "PascalCase")]
-pub enum I3State {
-    #[default]
-    Idle,
-    Info,
-    Good,
-    Warning,
-    Critical,
 }

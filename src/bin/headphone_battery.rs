@@ -3,11 +3,7 @@
 use anyhow::Result;
 use clap::{ArgAction, Parser};
 use log::warn;
-use script_utils::{
-    exec::Cmd,
-    i3status::{CustomI3Status, I3State},
-    logging,
-};
+use script_utils::{exec::Cmd, i3status::CustomBarStatus, logging};
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -35,7 +31,7 @@ fn main() -> Result<()> {
     }
 
     // If we got some headphone info, format and print it.
-    let i3state = state_from_battery_status(&device_status);
+    let state = state_from_battery_status(&device_status);
 
     let inner_text = match device_status {
         DeviceStatus::Charging { percentage } => {
@@ -48,13 +44,15 @@ fn main() -> Result<()> {
         DeviceStatus::Available { percentage } => format!("{percentage}%"),
         DeviceStatus::Unavailable => {
             // We didn't get any info, return an empty response.
-            println!("{}", serde_json::to_string(&CustomI3Status::default())?);
+            println!("{}", serde_json::to_string(&CustomBarStatus::default())?);
             return Ok(());
         }
     };
 
     let text = format!("( {inner_text})");
-    let json = serde_json::to_string(&CustomI3Status::new(i3state, text))?;
+    let mut status = CustomBarStatus::new(text);
+    status.class = state.into();
+    let json = serde_json::to_string(&status)?;
     println!("{json}");
 
     Ok(())
@@ -69,16 +67,16 @@ enum DeviceStatus {
 
 /// Determine the i3status state for this section.
 /// The color will change if the battery reaches certain states.
-fn state_from_battery_status(battery_status: &DeviceStatus) -> I3State {
+fn state_from_battery_status(battery_status: &DeviceStatus) -> &str {
     match battery_status {
-        DeviceStatus::Charging { .. } => I3State::Idle,
+        DeviceStatus::Charging { .. } => "good",
         DeviceStatus::Available { percentage } => match percentage {
-            0..=15 => I3State::Critical,
-            16..=25 => I3State::Warning,
-            26..=35 => I3State::Good,
-            _ => I3State::Idle,
+            0..=15 => "critical",
+            16..=25 => "warning",
+            26..=35 => "normal",
+            _ => "good",
         },
-        _ => I3State::Idle,
+        _ => "good",
     }
 }
 
