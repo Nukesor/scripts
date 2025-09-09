@@ -1,6 +1,6 @@
 #!/bin/env bash
 
-# Literally that, nuke the postgres data folder and create it a new
+# Literally that, nuke the postgres data folder and create it anew
 
 echo "Stopping postgres"
 sudo systemctl stop postgresql

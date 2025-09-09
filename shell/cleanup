@@ -1,21 +1,15 @@
 #!/bin/bash
-rm -rf ~/Desktop
-rm -rf ~/Documents
-
 # Cache stuff
 rm -rf ~/.ansible
 rm -rf ~/.pkg-cache
 rm -rf ~/.cmake
 rm -rf ~/.subversion
 rm -rf ~/.dotnet
-rm -rf ~/.ipfs
-rm -rf ~/.nuget
 rm -rf ~/.mono
 rm -rf ~/.berkshelf
 
 # History stuff
 rm -rf ~/.wget-hsts
-rm -rf ~/.NERDTreeBookmarks
 rm -rf ~/.bash_history
 rm -rf ~/.python_history
 rm -rf ~/.putty
@@ -26,9 +20,6 @@ rm -rf ~/.gradle
 rm -rf ~/.rye
 
 # Wtf
-rm -rf ~/.esd_auth
-rm -rf ~/.sbd
-rm -rf ~/GPUCache
 rm -rf ~/.gnome
 rm -rf ~/.android
 

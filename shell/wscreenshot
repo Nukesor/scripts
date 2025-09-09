@@ -26,7 +26,6 @@ while true; do
     output=$(i3-msg -t "get_outputs")
     lock_active=$(ps -aux | grep i3lock | wc -l)
     name=$(date +%Y-%m-%d-%H%M%S_${resolution_x}x${resolution_y}_scrot.png)
-    outname=$(date +%Y-%m-%d-%H%M%S_${outresolution_x}x${outresolution_y}_scrot.png)
 
     on_screen=false
     for space in "${allowed_spaces[@]}"; do

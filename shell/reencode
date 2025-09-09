@@ -6,7 +6,6 @@ set -euo pipefail
 
 original_path=$1
 filename=$(basename -- "$original_path")
-extension="${filename##*.}"
 filename="${filename%.*}"
 destination_path=~/reencodes/$filename.mp4
 
@@ -24,5 +23,5 @@ nice -n 15 ffmpeg \
     -preset slower \
     -x265-params \
     -crf=19:pools=none \
-    -threads $(nproc --all) \
+    -threads "$(nproc --all)" \
     $destination_path

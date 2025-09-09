@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Interface that should be spoofed
-interface=($(getWlanId))
+interface=$1
 
 # Get the current Mac address
 ipLinkString=($(ip link show $interface))
@@ -25,11 +25,12 @@ mac=$firstMac$lastMac
 mac=${mac,,}
 
 # Stopping all networking and setting down interfaces
-sudo netctl stop-all
 sudo ip link set $interface down
 sudo ip link set dev $interface down
 
 # Changing mac address
 sudo ip link set dev $interface address $mac
 
+sudo ip link set dev $interface up
+sudo ip link set $interface up
 echo "New Mac: $mac"

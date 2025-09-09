@@ -16,4 +16,4 @@ for element in "${ipLinkString[@]}"; do
     fi
 done
 
-sudo create_ap $wlan_interface $eth_interface lolnuke atomrofl
+sudo create_ap $wlan_interface $eth_interface $1 $2

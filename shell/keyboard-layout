@@ -2,13 +2,13 @@
 set -euo pipefail
 
 language=$1
-languages="de en toggle"
+languages="de eu toggle"
 
 state_file="${XDG_RUNTIME_DIR}"/keyboard_layout
 
 if [[ ! " ${languages} " == *" $1 "* ]]; then
-    echo "Invalid language."
-    echo "Valid languages are: $languages"
+    echo "Invalid subcommand."
+    echo "Valid subcommands are: $languages"
     exit 1
 fi
 
@@ -16,18 +16,18 @@ if [ "${language}" == "de" ]; then
     setxkbmap -layout de \
         -option caps:escape
 
-    echo 'de' >$XDG_RUNTIME_DIR
+    echo 'eu' >$state_file
     echo '{"icon":"keyboard","state":"Idle", "text": " de"}'
-elif [ "${language}" == "en" ]; then
+elif [ "${language}" == "eu" ]; then
     setxkbmap \
-        -layout arne \
+        -layout eu \
         -variant altgr-weur \
         -option caps:escape \
         -option lv3:ralt_switch \
         -option altwin:swap_lalt_lwin
 
-    echo 'en' >$XDG_RUNTIME_DIR
-    echo '{"icon": "keyboard","state": "Idle", "text": " en"}'
+    echo 'eu' >$state_file
+    echo '{"icon": "keyboard","state": "Idle", "text": " eu"}'
 
 elif [ "${language}" == "toggle" ]; then
     # Toggle to the other language, depending on the current layout
@@ -35,7 +35,7 @@ elif [ "${language}" == "toggle" ]; then
     if [ ! -f $FILE ]; then
         ~/.bin/keyboard-layout de
     elif [ "$(cat $state_file)" == "de" ]; then
-        ~/.bin/keyboard-layout en
+        ~/.bin/keyboard-layout eu
     else
         ~/.bin/keyboard-layout de
     fi
