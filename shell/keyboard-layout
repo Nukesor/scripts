@@ -2,7 +2,7 @@
 set -euo pipefail
 
 language=$1
-languages="de eu toggle"
+languages="de eu state toggle"
 
 state_file="${XDG_RUNTIME_DIR}"/keyboard_layout
 
@@ -12,27 +12,27 @@ if [[ ! " ${languages} " == *" $1 "* ]]; then
     exit 1
 fi
 
-if [ "${language}" == "de" ]; then
-    setxkbmap -layout de \
-        -option caps:escape
+if [ "${language}" == "state" ]; then
+    state="$(cat $state_file)"
+    echo "{\"icon\":\"keyboard\", \"text\": \"${state}\"}"
+elif [ "${language}" == "de" ]; then
+    hyprctl keyword input:kb_layout de >/dev/null
+    hyprctl keyword input:kb_options caps:escape >/dev/null
 
-    echo 'eu' >$state_file
-    echo '{"icon":"keyboard","state":"Idle", "text": " de"}'
+    echo 'de' >$state_file
 elif [ "${language}" == "eu" ]; then
-    setxkbmap \
-        -layout eu \
-        -variant altgr-weur \
-        -option caps:escape \
-        -option lv3:ralt_switch \
-        -option altwin:swap_lalt_lwin
+    hyprctl keyword input:kb_layout eu >/dev/null
+    hyprctl keyword input:kb_model altg_weur >/dev/null
+    hyprctl keyword \
+        input:kb_options \
+        caps:escape,lv3:ralt_switch,altwin:swap_lalt_lwin \
+        >/dev/null
 
     echo 'eu' >$state_file
-    echo '{"icon": "keyboard","state": "Idle", "text": " eu"}'
-
 elif [ "${language}" == "toggle" ]; then
     # Toggle to the other language, depending on the current layout
     # If no state file exists, switch to de
-    if [ ! -f $FILE ]; then
+    if [ ! -f $state_file ]; then
         ~/.bin/keyboard-layout de
     elif [ "$(cat $state_file)" == "de" ]; then
         ~/.bin/keyboard-layout eu
