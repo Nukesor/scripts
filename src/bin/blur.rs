@@ -5,9 +5,8 @@
 //! 3. Save it.
 use std::{
     fs::{File, remove_file},
-    io::Write,
     path::Path,
-    process::{Command, Stdio},
+    process::Command,
     time::Instant,
 };
 
@@ -30,16 +29,10 @@ use rayon::{
 };
 use script_utils::{bail, logging};
 
-#[derive(clap::ValueEnum, Clone, Copy, Debug)]
-enum Mode {
-    I3Lock,
-    Hyprlock,
-}
-
 #[derive(Parser, Debug)]
 #[clap(
     name = "blur",
-    about = "Make a screenshot via scrot and blur it as a lockscreen",
+    about = "Make a screenshot blur it and use it for the lockscreen",
     author = "Arne Beer <contact@arne.beer>"
 )]
 struct CliArguments {
@@ -47,10 +40,6 @@ struct CliArguments {
     /// I.e. `5` would result in a relative 20% downscale.
     #[clap(default_value = "5")]
     pub scale: usize,
-
-    /// i3-lock or hyprlock
-    #[clap(default_value = "hyprlock")]
-    pub mode: Mode,
 
     /// Verbose mode (-v, -vv, -vvv)
     #[clap(short, long, action = ArgAction::Count)]
@@ -66,105 +55,32 @@ fn main() -> Result<()> {
 
     // Make screenshot and init the image.
     let screenshot_path = runtime_dir.join("screenshot.jpg");
-    get_screenshot(&screenshot_path, &args.mode)?;
+    get_screenshot(&screenshot_path)?;
     let mut image = load_image(&screenshot_path)?;
 
     // Blur the image and write it the file.
     image = blur_image(args.scale, image)?;
 
-    match args.mode {
-        Mode::Hyprlock => {
-            let start = Instant::now();
-            let path = runtime_dir.join("wallpaper.webp");
-            if path.exists() {
-                remove_file(&path).context("Failed to remove old wallpaper")?;
-            }
-            let mut file = File::create(&path).context("Failed to open wallpaper file")?;
-
-            let encoder = WebPEncoder::new_lossless(&mut file);
-            image.write_with_encoder(encoder)?;
-
-            debug!(
-                "Hyprlock writing file took {}ms",
-                start.elapsed().as_millis()
-            );
-
-            Command::new("hyprlock")
-                .output()
-                .expect("failed to execute hyprlock");
-        }
-        Mode::I3Lock => {
-            let start = Instant::now();
-            // Spawn i3lock directly from in here.
-            let (width, height) = image.dimensions();
-
-            #[allow(clippy::zombie_processes)]
-            let mut child = Command::new("hyprlock")
-                .arg("--show-failed-attempts")
-                .arg("--raw")
-                .arg(format!("{width}x{height}:rgb"))
-                .arg("--image")
-                .arg("/dev/stdin")
-                .env("DISPLAY", ":0")
-                .stdin(Stdio::piped())
-                .stderr(Stdio::inherit())
-                .stdout(Stdio::inherit())
-                .spawn()
-                .expect("failed to execute child");
-
-            // Send i3lock the image in raw form via stdin.
-            let mut stdin = child.stdin.take().context("Failed to get stdin handle.")?;
-            stdin
-                .write(&image.into_raw())
-                .context("Failed to send image to i3lock stdin")?;
-
-            debug!(
-                "I3lock spawn + image copy: {}ms",
-                start.elapsed().as_millis()
-            );
-
-            // i3lock instantly forks away on it's own, but we should still wait for it to do that.
-            child.wait().context("Failed to wait for i3lock.")?;
-        }
-    }
+    write_image(&runtime_dir, image)?;
 
     Ok(())
 }
 
 /// Make a screenshot via scrot and capture the image (png) bytes.
-fn get_screenshot(path: &Path, mode: &Mode) -> Result<()> {
+fn get_screenshot(path: &Path) -> Result<()> {
     let start = Instant::now();
-    match mode {
-        Mode::I3Lock => {
-            let output = Command::new("scrot")
-                .args(["--overwrite", "--delay", "0", "--quality", "40", "--output"])
-                .arg(path.to_string_lossy().to_string())
-                .output()
-                .expect("failed to execute scrot");
+    let output = Command::new("grim")
+        .args(["-t", "jpeg", "-q", "40"])
+        .arg(path.to_string_lossy().to_string())
+        .output()
+        .expect("failed to execute grim");
 
-            if !output.status.success() {
-                bail!(
-                    "Failed to run scrot command!\nstdout: {}\nstderr: {}",
-                    String::from_utf8_lossy(&output.stdout),
-                    String::from_utf8_lossy(&output.stderr),
-                )
-            }
-        }
-        Mode::Hyprlock => {
-            let output = Command::new("grim")
-                .args(["-t", "jpeg", "-q", "40"])
-                .arg(path.to_string_lossy().to_string())
-                .output()
-                .expect("failed to execute grim");
-
-            if !output.status.success() {
-                bail!(
-                    "Failed to run scrot command!\nstdout: {}\nstderr: {}",
-                    String::from_utf8_lossy(&output.stdout),
-                    String::from_utf8_lossy(&output.stderr),
-                )
-            }
-        }
+    if !output.status.success() {
+        bail!(
+            "Failed to run scrot command!\nstdout: {}\nstderr: {}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr),
+        )
     }
 
     debug!(
@@ -184,10 +100,27 @@ fn load_image(path: &Path) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>> {
         DynamicImage::ImageRgb8(image) => image,
         _ => bail!("Expected Rgb8 format from scrot"),
     };
-    //remove_file(path).context("Failed to remove screenshot.")?;
+    remove_file(path).context("Failed to remove screenshot.")?;
 
     debug!("Image init time: {}ms", start.elapsed().as_millis());
     Ok(image)
+}
+
+/// Initialize the image from the raw bytes.
+fn write_image(runtime_dir: &Path, image: ImageBuffer<Rgb<u8>, Vec<u8>>) -> Result<()> {
+    let start = Instant::now();
+    let path = runtime_dir.join("wallpaper.webp");
+    if path.exists() {
+        remove_file(&path).context("Failed to remove old wallpaper")?;
+    }
+    let mut file = File::create(&path).context("Failed to open wallpaper file")?;
+
+    let encoder = WebPEncoder::new_lossless(&mut file);
+    image.write_with_encoder(encoder)?;
+
+    debug!("Writing file took {}ms", start.elapsed().as_millis());
+
+    Ok(())
 }
 
 #[derive(Clone)]
