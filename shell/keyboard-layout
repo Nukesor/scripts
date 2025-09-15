@@ -13,7 +13,11 @@ if [[ ! " ${languages} " == *" $1 "* ]]; then
 fi
 
 if [ "${language}" == "state" ]; then
-    state="$(cat $state_file)"
+    if [ ! -f $state_file ]; then
+        state="eu"
+    else
+        state="$(cat $state_file)"
+    fi
     echo "{\"icon\":\"keyboard\", \"text\": \"${state}\"}"
 elif [ "${language}" == "de" ]; then
     hyprctl keyword input:kb_layout de >/dev/null
