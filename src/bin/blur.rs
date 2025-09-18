@@ -16,11 +16,12 @@ use dirs::runtime_dir;
 use image::{
     DynamicImage,
     ImageBuffer,
-    ImageReader,
+    ImageFormat,
     Pixel,
     Rgb,
     RgbImage,
     codecs::webp::WebPEncoder,
+    load_from_memory_with_format,
 };
 use log::debug;
 use rayon::{
@@ -64,11 +65,10 @@ fn main() -> Result<()> {
 
     let runtime_dir = runtime_dir().context("Expected to find runtime dir.")?;
 
+    // Parallelized screenshot creation for every known monitor in the list.
     config.monitors.par_iter().for_each(|monitor| {
-        // Make screenshot and init the image.
-        let screenshot_path = runtime_dir.join(format!("{monitor}_screenshot.jpg"));
-        get_screenshot(monitor, &screenshot_path).expect("Failed to get screenshot");
-        let mut image = load_image(&screenshot_path).expect("Failed to load screenshot image");
+        let image_buffer = get_screenshot(monitor).expect("Failed to get screenshot");
+        let mut image = load_image(image_buffer).expect("Failed to load screenshot image");
 
         // Blur the image and write it the file.
         image = blur_image(args.scale, image).expect("Failed to blur screenshot image");
@@ -81,7 +81,7 @@ fn main() -> Result<()> {
 }
 
 /// Make a screenshot via scrot and capture the image (png) bytes.
-fn get_screenshot(monitor: &str, path: &Path) -> Result<()> {
+fn get_screenshot(monitor: &str) -> Result<Vec<u8>> {
     let start = Instant::now();
     let output = Command::new("grim")
         // JPEG with super low quali for speed
@@ -89,8 +89,8 @@ fn get_screenshot(monitor: &str, path: &Path) -> Result<()> {
         // Specify the output monitor
         .arg("-o")
         .arg(monitor)
-        // Specify the output path
-        .arg(path.to_string_lossy().to_string())
+        // Write to stdout
+        .arg("-")
         .output()
         .expect("failed to execute grim");
 
@@ -107,19 +107,18 @@ fn get_screenshot(monitor: &str, path: &Path) -> Result<()> {
         start.elapsed().as_millis()
     );
 
-    Ok(())
+    Ok(output.stdout)
 }
 
 /// Initialize the image from the raw bytes.
-fn load_image(path: &Path) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>> {
+fn load_image(buffer: Vec<u8>) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>> {
     let start = Instant::now();
 
-    let image = ImageReader::open(path)?.decode()?;
+    let image = load_from_memory_with_format(&buffer, ImageFormat::Jpeg)?;
     let image = match image {
         DynamicImage::ImageRgb8(image) => image,
-        _ => bail!("Expected Rgb8 format from scrot"),
+        _ => bail!("Expected Rgb8 format"),
     };
-    remove_file(path).context("Failed to remove screenshot.")?;
 
     debug!("Image init time: {}ms", start.elapsed().as_millis());
     Ok(image)
