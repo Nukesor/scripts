@@ -4,7 +4,7 @@
 //! 2. Run a custom point filter on the image data.
 //! 3. Save it.
 use std::{
-    fs::{File, remove_file},
+    fs::{File, read_to_string, remove_file},
     path::Path,
     process::Command,
     time::Instant,
@@ -28,11 +28,12 @@ use rayon::{
     slice::ParallelSliceMut,
 };
 use script_utils::{bail, logging};
+use serde::Deserialize;
 
 #[derive(Parser, Debug)]
 #[clap(
     name = "blur",
-    about = "Make a screenshot blur it and use it for the lockscreen",
+    about = "Make screenshots and blur them for use in a wayland lockscreen",
     author = "Arne Beer <contact@arne.beer>"
 )]
 struct CliArguments {
@@ -46,31 +47,49 @@ struct CliArguments {
     pub verbose: u8,
 }
 
+#[derive(Debug, Deserialize)]
+struct Config {
+    pub monitors: Vec<String>,
+}
+
 fn main() -> Result<()> {
     // Parse commandline options.
     let args = CliArguments::parse();
     logging::init_logger(args.verbose);
 
+    let config_path = dirs::config_dir().unwrap().join("blurlock.toml");
+    let config: Config =
+        toml::from_str(&read_to_string(config_path).context("Failed to read config file")?)
+            .context("Failed to deserialize config file")?;
+
     let runtime_dir = runtime_dir().context("Expected to find runtime dir.")?;
 
-    // Make screenshot and init the image.
-    let screenshot_path = runtime_dir.join("screenshot.jpg");
-    get_screenshot(&screenshot_path)?;
-    let mut image = load_image(&screenshot_path)?;
+    config.monitors.par_iter().for_each(|monitor| {
+        // Make screenshot and init the image.
+        let screenshot_path = runtime_dir.join(format!("{monitor}_screenshot.jpg"));
+        get_screenshot(monitor, &screenshot_path).expect("Failed to get screenshot");
+        let mut image = load_image(&screenshot_path).expect("Failed to load screenshot image");
 
-    // Blur the image and write it the file.
-    image = blur_image(args.scale, image)?;
+        // Blur the image and write it the file.
+        image = blur_image(args.scale, image).expect("Failed to blur screenshot image");
 
-    write_image(&runtime_dir, image)?;
+        write_image(&runtime_dir, monitor, image)
+            .expect("Failed to write screenshot image to runtime dir");
+    });
 
     Ok(())
 }
 
 /// Make a screenshot via scrot and capture the image (png) bytes.
-fn get_screenshot(path: &Path) -> Result<()> {
+fn get_screenshot(monitor: &str, path: &Path) -> Result<()> {
     let start = Instant::now();
     let output = Command::new("grim")
-        .args(["-t", "jpeg", "-q", "40"])
+        // JPEG with super low quali for speed
+        .args(["-t", "jpeg", "-q", "20"])
+        // Specify the output monitor
+        .arg("-o")
+        .arg(monitor)
+        // Specify the output path
         .arg(path.to_string_lossy().to_string())
         .output()
         .expect("failed to execute grim");
@@ -107,9 +126,13 @@ fn load_image(path: &Path) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>> {
 }
 
 /// Initialize the image from the raw bytes.
-fn write_image(runtime_dir: &Path, image: ImageBuffer<Rgb<u8>, Vec<u8>>) -> Result<()> {
+fn write_image(
+    runtime_dir: &Path,
+    monitor: &str,
+    image: ImageBuffer<Rgb<u8>, Vec<u8>>,
+) -> Result<()> {
     let start = Instant::now();
-    let path = runtime_dir.join("wallpaper.webp");
+    let path = runtime_dir.join(format!("{monitor}.webp"));
     if path.exists() {
         remove_file(&path).context("Failed to remove old wallpaper")?;
     }
