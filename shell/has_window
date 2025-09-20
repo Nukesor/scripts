@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Usage: ./check_window.sh "Window Name or Class"
+# Returns 1 if there's an open window for the given name, and 0 if there isn't.
+set -euo pipefail
+
+TARGET="$1"
+
+hyprctl clients -j | jq -e --arg t "$TARGET" '
+  .[] | select((.title | test($t; "i")) or (.class | test($t; "i")))
+' >/dev/null
