@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+#
+# hypr-dimmer.sh - Control screen dimming shader in Hyprland
+#
+# Usage:
+#   hypr-dimmer.sh up         # increase brightness one step
+#   hypr-dimmer.sh down       # decrease brightness one step
+#   hypr-dimmer.sh set <val>  # set brightness directly (20–100)
+#   hypr-dimmer.sh status     # show current brightness
+#
+
+STATEFILE="${XDG_RUNTIME_DIR}/hypr-dimmer.state"
+SHADER_DIR="${HOME}/.config/hypr/shaders"
+
+# Allowed dim levels (20%..100%, step of 10)
+LEVELS=(20 30 40 50 60 70 80 90 100)
+
+# Read current level or default to 100 (shader off)
+read_state() {
+    if [[ -f "$STATEFILE" ]]; then
+        cat "$STATEFILE"
+    else
+        echo 100
+    fi
+}
+
+# Save current level
+write_state() {
+    echo "$1" >"$STATEFILE"
+}
+
+# Apply shader based on level
+apply_shader() {
+    local level="$1"
+    if [[ "$level" -eq 100 ]]; then
+        # Disable shader
+        hyprctl keyword decoration:screen_shader ""
+    else
+        hyprctl keyword decoration:screen_shader "${SHADER_DIR}/dim_${level}.frag"
+    fi
+    write_state "$level"
+}
+
+# Find next/previous level in LEVELS
+step_level() {
+    local current="$1" dir="$2"
+    for i in "${!LEVELS[@]}"; do
+        if [[ "${LEVELS[$i]}" -eq "$current" ]]; then
+            if [[ "$dir" == "up" && $i -lt $((${#LEVELS[@]} - 1)) ]]; then
+                echo "${LEVELS[$((i + 1))]}"
+                return
+            elif [[ "$dir" == "down" && $i -gt 0 ]]; then
+                echo "${LEVELS[$((i - 1))]}"
+                return
+            else
+                echo "$current"
+                return
+            fi
+        fi
+    done
+    echo "$current" # fallback
+}
+
+# --- Commands ---
+cmd="$1"
+case "$cmd" in
+up)
+    current=$(read_state)
+    next=$(step_level "$current" up)
+    apply_shader "$next"
+    ;;
+down)
+    current=$(read_state)
+    next=$(step_level "$current" down)
+    apply_shader "$next"
+    ;;
+set)
+    val="$2"
+    if [[ " ${LEVELS[*]} " == *" $val "* ]]; then
+        apply_shader "$val"
+    else
+        echo "Invalid value. Use one of: ${LEVELS[*]}"
+        exit 1
+    fi
+    ;;
+status)
+    echo "Current dim level: $(read_state)%"
+    ;;
+*)
+    echo "Usage: dim {up|down|set <20-100>|status}"
+    exit 1
+    ;;
+esac
