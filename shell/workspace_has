@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Usage: ./has_window_on_workspace.sh "workspace" "classname"
+# Returns 1 if there's a window with the given classname on the specified workspace, and 0 if there isn't.
+set -euo pipefail
+
+WORKSPACE="$1"
+CLASSNAME="$2"
+
+hyprctl clients -j | jq -e --arg w "special:$WORKSPACE" --arg c "$CLASSNAME" '
+  .[] | select(.workspace.name == $w and (.class | test($c; "i")))
+' >/dev/null
