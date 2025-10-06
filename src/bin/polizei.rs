@@ -7,6 +7,7 @@ use script_utils::{
     logging,
     notify::*,
     process::get_process_cmdlines,
+    sleep_seconds,
     timer::{Phase, PhaseTimer},
 };
 
@@ -150,7 +151,7 @@ fn main() -> Result<()> {
             }
         }
 
-        std::thread::sleep(std::time::Duration::from_secs(60));
+        sleep_seconds(60);
     }
 }
 

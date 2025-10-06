@@ -3,13 +3,15 @@ use std::{
     path::PathBuf,
 };
 
-use anyhow::{Result, anyhow};
+use anyhow::{Context, Result, anyhow};
 use clap::{ArgAction, Parser};
 use dirs::runtime_dir;
 use log::info;
 use script_utils::{
+    exec::Cmd,
     logging,
     notify::*,
+    sleep_seconds,
     timer::{Phase, PhaseTimer},
 };
 
@@ -17,6 +19,7 @@ use script_utils::{
 pub enum StretchAction {
     Initial { stretch_interval: usize },
     Reminder { reminder_interval: usize },
+    Suspend,
 }
 
 #[derive(Parser, Debug)]
@@ -92,11 +95,12 @@ fn start(stretch_interval: usize, reminder_interval: usize) -> Result<()> {
             reminder_interval,
             StretchAction::Reminder { reminder_interval },
         ),
+        Phase::one_time(stretch_interval + 5400, StretchAction::Suspend),
     ];
     let mut timer = PhaseTimer::new(phases);
 
     loop {
-        std::thread::sleep(std::time::Duration::from_secs(60));
+        sleep_seconds(60);
 
         // Search for the ack file, if it exists, the user has stretched.
         // Reset the timer and remove the file.
@@ -123,6 +127,16 @@ fn start(stretch_interval: usize, reminder_interval: usize) -> Result<()> {
                     let overdue_minutes = timer.elapsed_minutes() - stretch_interval;
                     let message = format!("You are {overdue_minutes} minutes overdue! Go stretch!");
                     critical_notify(40 * 1000, message)?;
+                }
+                StretchAction::Suspend => {
+                    info!("Force suspending");
+                    let message = "Force suspending. Go stretch!".to_string();
+                    critical_notify(60 * 1000, message)?;
+                    // Give the user two minutes to respond to this message.
+                    sleep_seconds(120);
+                    Cmd::new("sudo systemctl suspend")
+                        .run_success()
+                        .context("Failed to send notification.")?;
                 }
             }
         }

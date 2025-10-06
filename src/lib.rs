@@ -23,6 +23,10 @@ pub fn setup() {
     better_panic::install();
 }
 
+pub fn sleep_seconds(seconds: u64) {
+    std::thread::sleep(std::time::Duration::from_secs(seconds));
+}
+
 #[macro_export]
 macro_rules! some_or_continue {
     ($res:expr) => {
