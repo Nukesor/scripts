@@ -1,7 +1,12 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    fs::{File, remove_file},
+    path::PathBuf,
+};
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use clap::{ArgAction, Parser};
+use dirs::runtime_dir;
 use log::{debug, info};
 use script_utils::{
     logging,
@@ -22,18 +27,30 @@ pub struct CliArguments {
     #[clap(short, long, action = ArgAction::Count)]
     pub verbose: u8,
 
-    /// The interval (in minutes) at which the user will be notified that they've
-    /// been playing for a certain amount of time.
-    #[clap(short, long, default_value = "60")]
-    pub notification_interval: i64,
+    #[clap(subcommand)]
+    cmd: SubCommand,
+}
 
-    /// The threshold at which the user will be notified to stop playing.
-    #[clap(short, long, default_value = "120")]
-    pub threshold: i64,
+#[derive(Parser, Debug)]
+pub enum SubCommand {
+    /// Start the daemon.
+    Start {
+        /// The interval (in minutes) at which the user will be notified that they've
+        /// been playing for a certain amount of time.
+        #[clap(short, long, default_value = "60")]
+        notification_interval: i64,
 
-    /// The interval at which the user will be notified to stop playing.
-    #[clap(short, long, default_value = "10")]
-    pub stop_notification_interval: i64,
+        /// The threshold at which the user will be notified to stop playing.
+        #[clap(short, long, default_value = "120")]
+        threshold: i64,
+
+        /// The interval at which the user will be notified to stop playing.
+        #[clap(short, long, default_value = "10")]
+        stop_notification_interval: i64,
+    },
+
+    /// Signal that you've acknowledged the gaming notification
+    Ack {},
 }
 
 // A mapping of the games to watch
@@ -106,18 +123,44 @@ impl RunningGame {
     }
 }
 
+fn ack_file_path() -> Result<PathBuf> {
+    Ok(runtime_dir()
+        .ok_or(anyhow!("Couldn't find runtime dir"))?
+        .join("polizei-ack"))
+}
+
 fn main() -> Result<()> {
     // Parse commandline options.
     let args = CliArguments::parse();
+    logging::init_logger(args.verbose);
+
+    match args.cmd {
+        SubCommand::Start {
+            notification_interval,
+            threshold,
+            stop_notification_interval,
+        } => start(notification_interval, threshold, stop_notification_interval),
+        SubCommand::Ack {} => {
+            // Touch an ack file to indicate that the user has acknowledged the gaming notification.
+            File::create(ack_file_path()?)?;
+            Ok(())
+        }
+    }
+}
+
+fn start(
+    notification_interval: i64,
+    threshold: i64,
+    stop_notification_interval: i64,
+) -> Result<()> {
     let mut running_games: HashMap<&'static str, RunningGame> = HashMap::new();
     let current_user_id = users::get_current_uid();
-    logging::init_logger(args.verbose);
     info!(
         "\n
         User will be regularily notified every {} minutes.
         After {} minutes they'll be prompted to stop.
         From then on they'll receive a notification every {} minutes\n",
-        args.notification_interval, args.threshold, args.stop_notification_interval,
+        notification_interval, threshold, stop_notification_interval,
     );
 
     // Check every few minutes whether any games are up and running.
@@ -125,6 +168,16 @@ fn main() -> Result<()> {
     // Get more annoying if they're running past the threshold.
     loop {
         let processes = get_process_cmdlines(current_user_id)?;
+
+        // Search for the ack file, if it exists, the user has acknowledged the notification.
+        // Reset all timers and remove the file.
+        if ack_file_path()?.exists() {
+            remove_file(ack_file_path()?)?;
+            for game in running_games.values_mut() {
+                game.timer.reset();
+            }
+            info!("Timers reset - user acknowledged gaming notification");
+        }
 
         let mut found_games: HashSet<&'static str> = HashSet::new();
         // Check all processes for the specified binaries.
@@ -138,7 +191,14 @@ fn main() -> Result<()> {
 
                 info!("Found running game {name}");
                 found_games.insert(name);
-                handle_running_game(&args, &mut running_games, name, *strict)?;
+                handle_running_game(
+                    notification_interval,
+                    threshold,
+                    stop_notification_interval,
+                    &mut running_games,
+                    name,
+                    *strict,
+                )?;
                 break;
             }
         }
@@ -157,16 +217,18 @@ fn main() -> Result<()> {
 }
 
 fn handle_running_game(
-    args: &CliArguments,
+    notification_interval: i64,
+    threshold: i64,
+    stop_notification_interval: i64,
     running_games: &mut HashMap<&'static str, RunningGame>,
     name: &'static str,
     strict: bool,
 ) -> Result<()> {
     let running_game = running_games.entry(name).or_insert_with(|| {
         RunningGame::new(
-            args.notification_interval,
-            args.threshold,
-            args.stop_notification_interval,
+            notification_interval,
+            threshold,
+            stop_notification_interval,
             strict,
         )
     });
