@@ -2,6 +2,18 @@
 
 # Literally that, nuke the postgres data folder and create it anew
 
+read -p "Are you sure? (y/n): " choice
+case "$choice" in
+y | Y) echo ;;
+*) exit 1 ;;
+esac
+
+read -p "Like, are you sure you wanna nuke the DB? (YES/n): " choice
+case "$choice" in
+YES) echo ;;
+*) exit 1 ;;
+esac
+
 echo "Stopping postgres"
 sudo systemctl stop postgresql
 echo "Nuke and re-initialize postgres data folder"
