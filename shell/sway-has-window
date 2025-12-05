@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Usage: ./check_window.sh "Window Name or Class"
+# Returns 1 if there's an open window matching the name or class, 0 otherwise.
+
+set -euo pipefail
+
+TARGET="$1"
+
+swaymsg -t get_tree | jq -e --arg t "$TARGET" '
+  .. | objects
+  | select(.window_properties?)
+  | select(
+    (.name // "") | test($t; "i") or
+    (.class // "") | test($t; "i")
+  )
+' >/dev/null

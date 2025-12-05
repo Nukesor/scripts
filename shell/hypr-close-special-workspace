@@ -1,0 +1,15 @@
+#!/bin/bash
+# Usage: ./close_special
+# Close special workspace on focused output if one is present
+
+active=$(swaymsg -t get_outputs -r | jq -r '.[] | select(.focused==true).name')
+
+if [[ -n "$active" ]]; then
+    # Assuming "special workspace" means a workspace named like "special:<output>"
+    special_ws=$(swaymsg -t get_workspaces -r | jq -r --arg output "$active" '.[] | select(.name | test("^special:" + $output + "$")) | .name')
+
+    if [[ -n "$special_ws" ]]; then
+        swaymsg workspace "$special_ws"
+        swaymsg workspace back_and_forth
+    fi
+fi

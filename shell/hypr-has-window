@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Usage: ./check_window.sh "Window Name or Class"
-# Returns 1 if there's an open window for the given name, and 0 if there isn't.
+# Returns 1 if there's an open window matching the name or class, 0 otherwise.
 set -euo pipefail
 
 TARGET="$1"

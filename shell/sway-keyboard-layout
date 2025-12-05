@@ -1,0 +1,41 @@
+#!/bin/bash
+set -euo pipefail
+
+language=$1
+languages="de eu state toggle"
+
+state_file="${XDG_RUNTIME_DIR}/keyboard_layout"
+
+if [[ ! " ${languages} " == *" $1 "* ]]; then
+    echo "Invalid subcommand."
+    echo "Valid subcommands are: $languages"
+    exit 1
+fi
+
+if [ "${language}" == "state" ]; then
+    if [ ! -f "$state_file" ]; then
+        state="eu"
+    else
+        state="$(cat "$state_file")"
+    fi
+    echo "{\"icon\":\"keyboard\", \"text\": \"${state}\"}"
+elif [ "${language}" == "de" ]; then
+    swaymsg input "type:keyboard" xkb_layout de >/dev/null
+    swaymsg input "type:keyboard" xkb_options caps:escape >/dev/null
+
+    echo 'de' >"$state_file"
+elif [ "${language}" == "eu" ]; then
+    swaymsg input "type:keyboard" xkb_layout eu >/dev/null
+    swaymsg input "type:keyboard" xkb_model altg_weur >/dev/null
+    swaymsg input "type:keyboard" xkb_options caps:escape,lv3:ralt_switch,altwin:swap_lalt_lwin >/dev/null
+
+    echo 'eu' >"$state_file"
+elif [ "${language}" == "toggle" ]; then
+    if [ ! -f "$state_file" ]; then
+        ~/.bin/keyboard-layout de
+    elif [ "$(cat "$state_file")" == "de" ]; then
+        ~/.bin/keyboard-layout eu
+    else
+        ~/.bin/keyboard-layout de
+    fi
+fi
