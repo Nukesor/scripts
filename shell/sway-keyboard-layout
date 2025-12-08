@@ -2,13 +2,13 @@
 set -euo pipefail
 
 language=$1
-languages="de eu state toggle"
+commands="de eu state toggle"
 
 state_file="${XDG_RUNTIME_DIR}/keyboard_layout"
 
-if [[ ! " ${languages} " == *" $1 "* ]]; then
+if [[ ! " ${commands} " == *" $1 "* ]]; then
     echo "Invalid subcommand."
-    echo "Valid subcommands are: $languages"
+    echo "Valid subcommands are: $commands"
     exit 1
 fi
 
@@ -32,10 +32,10 @@ elif [ "${language}" == "eu" ]; then
     echo 'eu' >"$state_file"
 elif [ "${language}" == "toggle" ]; then
     if [ ! -f "$state_file" ]; then
-        ~/.bin/keyboard-layout de
+        sway-keyboard-layout de
     elif [ "$(cat "$state_file")" == "de" ]; then
-        ~/.bin/keyboard-layout eu
+        sway-keyboard-layout eu
     else
-        ~/.bin/keyboard-layout de
+        sway-keyboard-layout de
     fi
 fi
