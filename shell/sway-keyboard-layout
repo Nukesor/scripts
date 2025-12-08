@@ -20,22 +20,28 @@ if [ "${language}" == "state" ]; then
     fi
     echo "{\"icon\":\"keyboard\", \"text\": \"${state}\"}"
 elif [ "${language}" == "de" ]; then
-    swaymsg input "type:keyboard" xkb_layout de >/dev/null
-    swaymsg input "type:keyboard" xkb_options caps:escape >/dev/null
+    >&2 echo "Running explicit de command"
+    >&2 swaymsg input "type:keyboard" xkb_layout de >/dev/null
+    >&2 swaymsg input "type:keyboard" xkb_options caps:escape >/dev/null
 
     echo 'de' >"$state_file"
 elif [ "${language}" == "eu" ]; then
-    swaymsg input "type:keyboard" xkb_layout eu >/dev/null
-    swaymsg input "type:keyboard" xkb_model altg_weur >/dev/null
-    swaymsg input "type:keyboard" xkb_options caps:escape,lv3:ralt_switch,altwin:swap_lalt_lwin >/dev/null
+    >&2 echo "Running explicit eu command"
+    >&2 swaymsg input "type:keyboard" xkb_layout eu >/dev/null
+    >&2 swaymsg input "type:keyboard" xkb_model altg_weur >/dev/null
+    >&2 swaymsg input "type:keyboard" xkb_options caps:escape
 
     echo 'eu' >"$state_file"
 elif [ "${language}" == "toggle" ]; then
+    >&2 echo "Running toggle command"
     if [ ! -f "$state_file" ]; then
+        >&2 echo "No state file found"
         sway-keyboard-layout de
     elif [ "$(cat "$state_file")" == "de" ]; then
+        >&2 echo "Current state language is de"
         sway-keyboard-layout eu
     else
+        >&2 echo "Current state language is en"
         sway-keyboard-layout de
     fi
 fi
