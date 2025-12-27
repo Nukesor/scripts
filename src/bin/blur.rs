@@ -141,6 +141,7 @@ fn write_image(
     image.write_with_encoder(encoder)?;
 
     debug!("Writing file took {}ms", start.elapsed().as_millis());
+    debug!("File written to {path:?}");
 
     Ok(())
 }
