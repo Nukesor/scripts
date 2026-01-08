@@ -1,10 +1,16 @@
-//! Get the output of the following command and sort them by execution time.
+//! Run analysis on the the json formatted report of a test run
+//! and return the tests in order of required time.
+//!
+//! To get best results, it's encouraged to set the worker test threads to 1 via:
+//! `RUST_TEST_THREADS=1`
+//!
 //! ```sh
-//!     cargo +nightly test --
-//!         --quiet \
-//!         -Z unstable-options \
-//!         --format json \
-//!         --report-time > target/debug/test.json
+//! cargo +nightly test --
+//!     --quiet \
+//!     -Z unstable-options \
+//!     --format json \
+//!     --report-time > target/debug/test.json
+//! slow_rust_tests target/debug/test.json
 //! ```
 use std::path::PathBuf;
 
@@ -92,7 +98,7 @@ fn main() -> Result<()> {
     // Collect all reports of finished successful tests.
     let mut tests = Vec::new();
 
-    // Each line in this document is a full
+    // Each line in this document is a full test report.
     for line in file.lines() {
         let report: Report =
             serde_json::from_str(line).context(format!("Failed to parse line: {line}"))?;
