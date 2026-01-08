@@ -8,21 +8,8 @@ rm -rf ~/.dotnet
 rm -rf ~/.mono
 rm -rf ~/.berkshelf
 
-# History stuff
-rm -rf ~/.wget-hsts
-rm -rf ~/.bash_history
-rm -rf ~/.python_history
-rm -rf ~/.putty
-
 # Java stuff
 rm -rf ~/.java
-rm -rf ~/.gradle
-rm -rf ~/.rye
 
-# Wtf
-rm -rf ~/.gnome
-rm -rf ~/.android
-
-# Desktop/File manager
+# Clear trash folder
 rm -rf ~/.local/share/Trash/*
-rm -rf ~/Desktop
