@@ -1,5 +1,9 @@
 #!/bin/zsh
 # Show colored output for changed **AND** untracked files.
+# Dependencies:
+# - delta
+# - git-diff-all
+
 file=$1
 output=$(git diff --color=always $file 2>/dev/null | delta)
 
