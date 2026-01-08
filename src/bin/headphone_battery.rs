@@ -120,7 +120,7 @@ fn headsetcontrol() -> DeviceStatus {
             };
         }
 
-        // Battery output of the command looks like this
+        // Battery status of the command starts with "Level:"
         if line.starts_with("Level:") {
             let parts: Vec<String> = line.split(' ').map(|s| s.to_string()).collect();
             let battery = &parts[1];
@@ -146,13 +146,16 @@ fn headsetcontrol() -> DeviceStatus {
     DeviceStatus::Unavailable
 }
 
-// First check `bluetoothctl`.
+// Check `bluetoothctl` for any devices with a battery.
+//
+// This is a pretty stupid check and would theoretically detect any device with a bettery, but it's
+// good enough for me.
 fn bluetoothctl() -> DeviceStatus {
     let result = Cmd::new("bluetoothctl info").run_success();
     let output = match result {
         Ok(capture) => capture.stdout_str(),
         Err(err) => {
-            warn!("Got error on headsetcontrol call:\n{err:#?}");
+            warn!("Got error on bluetoothctl call:\n{err:#?}");
             return DeviceStatus::Unavailable;
         }
     };
@@ -165,7 +168,6 @@ fn bluetoothctl() -> DeviceStatus {
     // Battery Percentage: 0x64 (100)
     // ```
     for line in output.lines() {
-        // Battery output of the command looks like this
         if line.trim().starts_with("Battery Percentage:") {
             // Split at `(` to get the last part: `100)`
             let parts: Vec<String> = line.split('(').map(|s| s.to_string()).collect();
