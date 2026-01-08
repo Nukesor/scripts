@@ -1,7 +1,0 @@
-#!/bin/bash
-
-borg create --stats root@jarvis:/var/lib/backup/borg/documents::$(date -I) ~/Dokumente
-borg create --stats root@jarvis:/var/lib/backup/borg/images::$(date -I) ~/Syncthing/Bilder
-if [[ "bomb" == $(hostname) ]]; then
-    borg create --stats root@jarvis:/var/lib/backup/borg/music::$(date -I) ~/music
-fi
