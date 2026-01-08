@@ -8,5 +8,5 @@ elif [ -z "$2" ]; then
 else
     command="rename workspace $1 to $2"
     echo $command
-    i3-msg $command
+    swaymsg $command
 fi
