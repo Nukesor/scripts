@@ -17,7 +17,7 @@
 //! In this case, the second file will be deleted, as it's newer than the first one.
 use std::{
     collections::BTreeMap,
-    fs::{DirEntry, remove_file},
+    fs::{DirEntry, File, remove_file},
     path::PathBuf,
 };
 
@@ -33,6 +33,10 @@ use script_utils::{
     read_dir_or_fail,
     table::{pretty_table, print_headline_table},
 };
+use serde::{Deserialize, Serialize};
+
+const DEFAULT_FORMAT: &str = "%Y-%m-%d_%H-%M";
+const DEFAULT_REGEX: &str = r"[a-z_]*_([0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2})\..*";
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -52,17 +56,13 @@ pub struct CliArguments {
     /// The default extracts
     /// "2025-04-02_00-00" from something like
     /// "some_game_name_2025-04-02_00-00.tar.zst"
-    #[clap(
-        short,
-        long,
-        default_value = r"[a-z_]*_([0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2})\..*"
-    )]
-    pub date_extraction_regex: String,
+    #[clap(short = 'd', long)]
+    pub date_extraction_regex: Option<String>,
 
     /// The date format string that's used in the filename
     /// E.g. "%Y-%m-%d_%H-%M" for "2025-04-02_00-00.dump"
-    #[clap(short, long, default_value = "%Y-%m-%d_%H-%M")]
-    pub date_format: String,
+    #[clap(short = 'f', long)]
+    pub date_format: Option<String>,
 
     /// Don't do any operations unless this flag is set
     #[clap(short, long)]
@@ -72,6 +72,22 @@ pub struct CliArguments {
     /// This will run the staggered backups for each directory that is found.
     #[clap(short, long)]
     pub recursive: bool,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+struct StaggerConfig {
+    pub regex: Option<String>,
+    pub format: Option<String>,
+}
+
+impl StaggerConfig {
+    pub fn regex(&self) -> String {
+        self.regex.clone().unwrap_or(DEFAULT_REGEX.to_string())
+    }
+
+    pub fn format(&self) -> String {
+        self.format.clone().unwrap_or(DEFAULT_FORMAT.to_string())
+    }
 }
 
 fn main() -> Result<()> {
@@ -109,6 +125,22 @@ pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
     let mut files_by_date = BTreeMap::new();
     println!("═══════════════════════════════════════════════════════════════");
     print_headline_table(format!("Checking folder: {path:?}"));
+
+    let config_path = args.path.join("stagger.conf");
+    let mut config = if config_path.exists() {
+        println!("Found stagger config file");
+        serde_yaml::from_reader(File::open(config_path)?)?
+    } else {
+        StaggerConfig::default()
+    };
+
+    if let Some(regex) = &args.date_extraction_regex {
+        config.regex = Some(regex.clone());
+    }
+    if let Some(format) = &args.date_format {
+        config.format = Some(format.clone());
+    }
+
     // Go through all files and extract the datetime from its filename.
     for file in files {
         let name = file
@@ -119,16 +151,16 @@ pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
             .to_string();
 
         // Run the date extraction regex
-        let re = Regex::new(&args.date_extraction_regex).context(format!(
+        let re = Regex::new(&config.regex()).context(format!(
             "Found invalid date_extraction_regex: {}",
-            args.date_extraction_regex
+            config.regex()
         ))?;
         let Some(captures) = re.captures(&name) else {
             error!("Date extraction regex didn't match name. Ignoring file: {name}");
             continue;
         };
 
-        let datetime = NaiveDateTime::parse_from_str(&captures[1], &args.date_format);
+        let datetime = NaiveDateTime::parse_from_str(&captures[1], &config.format());
         let datetime = match datetime {
             Ok(datetime) => datetime,
             Err(_) => {
