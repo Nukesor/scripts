@@ -150,6 +150,10 @@ pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
             .to_string_lossy()
             .to_string();
 
+        if name == "stagger.yml" {
+            continue;
+        }
+
         // Run the date extraction regex
         let re = Regex::new(&config.regex()).context(format!(
             "Found invalid date_extraction_regex: {}",
