@@ -126,7 +126,7 @@ pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
     println!("═══════════════════════════════════════════════════════════════");
     print_headline_table(format!("Checking folder: {path:?}"));
 
-    let config_path = args.path.join("stagger.conf");
+    let config_path = path.join("stagger.yml");
     let mut config = if config_path.exists() {
         println!("Found stagger config file");
         serde_yaml::from_reader(File::open(config_path)?)?
