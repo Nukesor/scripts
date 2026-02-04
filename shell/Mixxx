@@ -1,0 +1,3 @@
+#!/bin/bash
+
+mixxx --settings-path ~/storage/music/Mixxx/settings
