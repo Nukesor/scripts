@@ -124,7 +124,6 @@ impl<T: Clone> PhaseTimer<T> {
 
         // Create an iterator over the phases in the correct order.
         let mut phases = phases.into_iter().peekable();
-        // Get the first phase.
         let Some(current_phase) = phases.next() else {
             panic!("Initialized Timer with no phases.")
         };
@@ -232,7 +231,9 @@ impl<T: Clone> PhaseTimer<T> {
 
     /// Get the current elapsed minutes since the timer started
     pub fn elapsed_minutes(&self) -> usize {
-        (Utc::now() - self.start_time).num_minutes() as usize
+        // We clamp to `0` in case UTC::now() is slightly before start_time
+        // (Probably happens due to time shift adjustments at boot).
+        (Utc::now() - self.start_time).num_minutes().max(0) as usize
     }
 
     /// Test helper to simulate timer behavior at a specific time
