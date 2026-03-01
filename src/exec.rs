@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use anyhow::{Result, bail};
 use shellexpand::tilde;
-use subprocess::{CaptureData, Exec, Redirection};
+use subprocess::{Capture, Exec, Redirection};
 
 pub struct Cmd {
     cwd: Option<String>,
@@ -37,7 +37,7 @@ impl Cmd {
     }
 
     /// Run the command and return the exit status
-    pub fn run(&self) -> Result<CaptureData> {
+    pub fn run(&self) -> Result<Capture> {
         let mut exec = Exec::shell(&self.command)
             .stdout(Redirection::Pipe)
             .stderr(Redirection::Merge);
@@ -67,7 +67,7 @@ impl Cmd {
     }
 
     /// A wrapper around `run` that also errors on non-zero exit statuses
-    pub fn run_success(&self) -> Result<CaptureData> {
+    pub fn run_success(&self) -> Result<Capture> {
         let capture = self.run()?;
 
         // Return an error on any non-1 exit codes
