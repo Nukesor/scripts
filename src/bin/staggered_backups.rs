@@ -2,9 +2,9 @@
 //!
 //! It expects a folder that's full of files, each containing the timestamp of its creation in the
 //! filename. It then deletes all files except:
-//! - 1 file for each of the last 7 days
-//! - 1 file for each of the last 26 weeks
-//! - 1 file for each month of the last 2 years
+//! - One file for each of the last 30 days
+//! - One file for each week until roughly half a year is covered
+//! - One file for each month until roughly 2 years are covered
 //!
 //! The file that's kept is always the oldest file that can be found for the given timespan.
 //!
@@ -29,7 +29,8 @@ use regex::Regex;
 use script_utils::{
     FileType,
     fs::find_leaf_dirs,
-    logging, read_dir_or_fail,
+    logging,
+    read_dir_or_fail,
     table::{pretty_table, print_headline_table},
 };
 use serde::{Deserialize, Serialize};
@@ -151,6 +152,18 @@ pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
         config.format = Some(format.clone());
     }
 
+    // Build the regex once and ensure it actually exposes the datetime capture we rely on.
+    let regex_pattern = config.regex();
+    let date_format = config.format();
+    let re = Regex::new(&regex_pattern).context(format!(
+        "Found invalid date_extraction_regex: {regex_pattern}"
+    ))?;
+    if re.captures_len() < 2 {
+        bail!(
+            "The date_extraction_regex must contain a capture group for the datetime string: {regex_pattern}"
+        );
+    }
+
     // Go through all files and extract the datetime from its filename.
     for file in files {
         let name = file
@@ -164,17 +177,12 @@ pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
             continue;
         }
 
-        // Run the date extraction regex
-        let re = Regex::new(&config.regex()).context(format!(
-            "Found invalid date_extraction_regex: {}",
-            config.regex()
-        ))?;
         let Some(captures) = re.captures(&name) else {
             error!("Date extraction regex didn't match name. Ignoring file: {name}");
             continue;
         };
 
-        let datetime = NaiveDateTime::parse_from_str(&captures[1], &config.format());
+        let datetime = NaiveDateTime::parse_from_str(&captures[1], &date_format);
         let datetime = match datetime {
             Ok(datetime) => datetime,
             Err(_) => {
@@ -264,6 +272,21 @@ pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
                     entry.dir_entry.path()
                 ))?;
             }
+        }
+    }
+
+    // Anything that's left was older than the longest configured bracket and can be fully removed.
+    for (_, entry) in files_by_date {
+        table.add_row(vec![
+            "expired".to_string(),
+            "-".to_string(),
+            entry.dir_entry.file_name().to_string_lossy().to_string(),
+        ]);
+        if args.execute {
+            remove_file(entry.dir_entry.path()).context(format!(
+                "Failed to remove file: {:?}",
+                entry.dir_entry.path()
+            ))?;
         }
     }
     println!("{table}");
