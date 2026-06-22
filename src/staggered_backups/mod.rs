@@ -18,10 +18,14 @@
 //! - mydb_2025-04-01_23-00.dump
 //!
 //! In this case, the second file will be deleted, as it's newer than the first one.
-use std::{collections::BTreeMap, fs::File, path::PathBuf};
+use std::{
+    collections::BTreeMap,
+    fs::File,
+    path::{Path, PathBuf},
+};
 
 use anyhow::{Context, Result, bail};
-use chrono::{NaiveDateTime, TimeDelta};
+use chrono::{NaiveDate, NaiveDateTime, TimeDelta};
 use log::error;
 use regex::Regex;
 
@@ -35,9 +39,12 @@ mod bracket;
 mod config;
 mod entry;
 
-use bracket::init_brackets;
+use bracket::{Bracket, init_brackets};
 use config::StaggerConfig;
 use entry::Entry;
+
+type EntriesByDate = BTreeMap<NaiveDateTime, Entry>;
+type RetainedEntries = Vec<(Entry, &'static str, NaiveDate)>;
 
 #[derive(Debug, Clone, Default)]
 pub struct RunOptions {
@@ -46,10 +53,27 @@ pub struct RunOptions {
     pub execute: bool,
 }
 
+/// Run staggered backup retention for a single directory.
 pub fn run_staggered_backups(path: &PathBuf, options: &RunOptions) -> Result<()> {
     println!("═══════════════════════════════════════════════════════════════");
     print_headline_table(format!("Checking folder: {path:?}"));
 
+    let config = load_config(path, options)?;
+    let files_by_date = collect_entries(path, &config)?;
+    if files_by_date.is_empty() {
+        println!("No files for backup found.");
+        return Ok(());
+    }
+
+    let (brackets, expired_entries) = sort_entries_into_brackets(files_by_date)?;
+    let final_entries = remove_entries(brackets, expired_entries, options.execute)?;
+    print_remaining_entries(&final_entries);
+
+    Ok(())
+}
+
+/// Load the directory configuration and apply command line overrides.
+fn load_config(path: &Path, options: &RunOptions) -> Result<StaggerConfig> {
     let config_path = path.join("stagger.yml");
     let mut config = if config_path.exists() {
         println!("Found stagger config file");
@@ -57,7 +81,6 @@ pub fn run_staggered_backups(path: &PathBuf, options: &RunOptions) -> Result<()>
     } else {
         StaggerConfig::default()
     };
-    config.validate()?;
 
     if let Some(regex) = &options.date_extraction_regex {
         config.regex = Some(regex.clone());
@@ -65,7 +88,13 @@ pub fn run_staggered_backups(path: &PathBuf, options: &RunOptions) -> Result<()>
     if let Some(format) = &options.date_format {
         config.format = Some(format.clone());
     }
+    config.validate()?;
 
+    Ok(config)
+}
+
+/// Collect primary backup files and their configured sidecars from a directory.
+fn collect_entries(path: &PathBuf, config: &StaggerConfig) -> Result<EntriesByDate> {
     let files = read_dir_or_fail(path, Some(FileType::File)).context("Failed to read files")?;
     let mut files_by_name = BTreeMap::new();
     for file in files {
@@ -76,20 +105,19 @@ pub fn run_staggered_backups(path: &PathBuf, options: &RunOptions) -> Result<()>
             .to_string_lossy()
             .to_string();
 
-        // Ignore the stagger.yml
+        // Ignore the local configuration file during backup collection.
         if name == "stagger.yml" {
             continue;
         }
 
         files_by_name.insert(name, file);
     }
-    let mut files_by_date = BTreeMap::new();
 
-    // Build the regex once and ensure it actually exposes the datetime capture we rely on.
-    let re = build_date_regex(&config)?;
+    let mut files_by_date = BTreeMap::new();
+    let re = build_date_regex(config)?;
     let date_format = config.format();
 
-    // Go through all files and extract the datetime from its filename.
+    // Go through all files and extract the datetime from each matching filename.
     let file_names = files_by_name.keys().cloned().collect::<Vec<_>>();
     for name in file_names {
         let Some(captures) = re.captures(&name) else {
@@ -119,10 +147,6 @@ pub fn run_staggered_backups(path: &PathBuf, options: &RunOptions) -> Result<()>
 
         files_by_date.insert(datetime, Entry::new(file, sidecars));
     }
-    if files_by_date.is_empty() {
-        println!("No files for backup found.");
-        return Ok(());
-    }
 
     // Make sure there're no superfluous files.
     if !files_by_name.is_empty() {
@@ -133,19 +157,17 @@ pub fn run_staggered_backups(path: &PathBuf, options: &RunOptions) -> Result<()>
         bail!("Aborting due to unmatched files");
     }
 
+    Ok(files_by_date)
+}
+
+/// Sort collected entries into retention brackets and return the fully expired leftovers.
+fn sort_entries_into_brackets(
+    mut files_by_date: EntriesByDate,
+) -> Result<(Vec<Bracket>, EntriesByDate)> {
     let mut brackets = init_brackets()?;
 
-    // Now we sort all entries into their brackets.
-    //
-    // The brackets are ordered in a way that the smaller brackets come first.
-    // So even if there's some overlap, entries will be sorted into the smaller brackets
-    // (i.e days instead of weeks).
-    //
-    // The backup files themselves are ordered from oldest to newest.
-    // We now check for each bracket whether the newest backup matches the given bracket.
-    // This is done until an entry is hit that is older than the current bracket.
-    // In that case, we continue with the next bracket.
-    for bracket in brackets.iter_mut() {
+    // The brackets are ordered so smaller units claim matching entries first.
+    for bracket in &mut brackets {
         'inner: loop {
             {
                 let entry = files_by_date.last_key_value();
@@ -179,11 +201,15 @@ pub fn run_staggered_backups(path: &PathBuf, options: &RunOptions) -> Result<()>
         }
     }
 
-    // Now delete all but the very first entry on each bracket.
-    // So we keep
-    // - One backup per day
-    // - One backup per week
-    // - One backup per month
+    Ok((brackets, files_by_date))
+}
+
+/// Remove all unwanted entries and return the entries that are retained.
+fn remove_entries(
+    brackets: Vec<Bracket>,
+    expired_entries: EntriesByDate,
+    execute: bool,
+) -> Result<RetainedEntries> {
     let mut final_entries = Vec::new();
     println!("\nREMOVED FILES:");
     let mut table = pretty_table();
@@ -201,25 +227,30 @@ pub fn run_staggered_backups(path: &PathBuf, options: &RunOptions) -> Result<()>
                 format!("{:?}", bracket.start_date),
                 entry.filenames().join("\n"),
             ]);
-            if options.execute {
+            if execute {
                 entry.remove_files()?;
             }
         }
     }
 
     // Anything that's left was older than the longest configured bracket and can be fully removed.
-    for (_, entry) in files_by_date {
+    for (_, entry) in expired_entries {
         table.add_row(vec![
             "expired".to_string(),
             "-".to_string(),
             entry.filenames().join("\n"),
         ]);
-        if options.execute {
+        if execute {
             entry.remove_files()?;
         }
     }
     println!("{table}");
 
+    Ok(final_entries)
+}
+
+/// Print the entries that remain after the retention policy has been applied.
+fn print_remaining_entries(final_entries: &RetainedEntries) {
     println!("\nREMAINING FILES:");
     let mut table = pretty_table();
     table.set_header(vec!["bracket", "bracket start", "files"]);
@@ -231,10 +262,9 @@ pub fn run_staggered_backups(path: &PathBuf, options: &RunOptions) -> Result<()>
         ]);
     }
     println!("{table}");
-
-    Ok(())
 }
 
+/// Build and validate the date extraction regex from the active configuration.
 fn build_date_regex(config: &StaggerConfig) -> Result<Regex> {
     // Build the regex once and ensure it actually exposes the datetime capture we rely on.
     let regex_pattern = config.regex();
@@ -249,3 +279,6 @@ fn build_date_regex(config: &StaggerConfig) -> Result<Regex> {
 
     Ok(re)
 }
+
+#[cfg(test)]
+mod tests;

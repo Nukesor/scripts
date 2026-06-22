@@ -20,14 +20,17 @@ pub struct StaggerConfig {
 }
 
 impl StaggerConfig {
+    /// Return the configured date extraction regex or the default pattern.
     pub fn regex(&self) -> String {
         self.regex.clone().unwrap_or(DEFAULT_REGEX.to_string())
     }
 
+    /// Return the configured date format or the default format string.
     pub fn format(&self) -> String {
         self.format.clone().unwrap_or(DEFAULT_FORMAT.to_string())
     }
 
+    /// Validate semantic constraints that serde alone cannot express.
     pub fn validate(&self) -> Result<()> {
         for sidecar in &self.sidecar {
             if sidecar.suffix.is_empty() {

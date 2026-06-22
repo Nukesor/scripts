@@ -15,6 +15,7 @@ pub struct Bracket {
 }
 
 impl Bracket {
+    /// Create an empty retention bracket.
     pub fn new(start_date: NaiveDate, days: u32, description: &'static str) -> Self {
         Self {
             start_date,
@@ -35,6 +36,7 @@ const DAY_BRACKETS: u64 = 30;
 const WEEK_BRACKETS: u64 = 26;
 const MONTH_BRACKETS: u64 = 24;
 
+/// Build the configured daily, weekly, and monthly retention brackets.
 pub fn init_brackets() -> Result<Vec<Bracket>> {
     let mut brackets = Vec::new();
     let mut last_daily_bracket = Utc::now().date_naive();

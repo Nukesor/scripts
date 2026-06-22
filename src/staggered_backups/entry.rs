@@ -9,6 +9,7 @@ pub struct Entry {
 }
 
 impl Entry {
+    /// Create a logical backup entry from a primary file and its sidecars.
     pub fn new(dir_entry: DirEntry, sidecars: Vec<DirEntry>) -> Self {
         Self {
             dir_entry,
@@ -16,6 +17,7 @@ impl Entry {
         }
     }
 
+    /// Return the filenames that belong to this logical backup entry.
     pub fn filenames(&self) -> Vec<String> {
         let mut filenames = vec![self.dir_entry.file_name().to_string_lossy().to_string()];
         for sidecar in &self.sidecars {
@@ -25,6 +27,7 @@ impl Entry {
         filenames
     }
 
+    /// Remove the primary file and all sidecars that belong to this entry.
     pub fn remove_files(&self) -> Result<()> {
         remove_file(self.dir_entry.path()).context(format!(
             "Failed to remove file: {:?}",
