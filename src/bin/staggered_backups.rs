@@ -5,6 +5,8 @@
 //! - One file for each of the last 30 days
 //! - One file for each week until roughly half a year is covered
 //! - One file for each month until roughly 2 years are covered
+//! Optional sidecar files can be configured in `stagger.yml` and are kept or deleted together with
+//! their primary backup file.
 //!
 //! The file that's kept is always the oldest file that can be found for the given timespan.
 //!
@@ -41,11 +43,32 @@ const DEFAULT_REGEX: &str = r"[a-z_]*_([0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]
 #[derive(Debug)]
 struct Entry {
     pub dir_entry: DirEntry,
+    pub sidecars: Vec<DirEntry>,
 }
 
 impl Entry {
-    pub fn new(dir_entry: DirEntry) -> Self {
-        Self { dir_entry }
+    pub fn new(dir_entry: DirEntry, sidecars: Vec<DirEntry>) -> Self {
+        Self {
+            dir_entry,
+            sidecars,
+        }
+    }
+
+    pub fn filenames(&self) -> String {
+        std::iter::once(&self.dir_entry)
+            .chain(self.sidecars.iter())
+            .map(|entry| entry.file_name().to_string_lossy().to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+    }
+
+    pub fn remove_files(&self) -> Result<()> {
+        for file in std::iter::once(&self.dir_entry).chain(self.sidecars.iter()) {
+            remove_file(file.path())
+                .context(format!("Failed to remove file: {:?}", file.path()))?;
+        }
+
+        Ok(())
     }
 }
 
@@ -85,10 +108,18 @@ pub struct CliArguments {
     pub recursive: bool,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SidecarConfig {
+    pub suffix: String,
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 struct StaggerConfig {
     pub regex: Option<String>,
     pub format: Option<String>,
+    #[serde(default)]
+    pub sidecar: Vec<SidecarConfig>,
 }
 
 impl StaggerConfig {
@@ -133,6 +164,23 @@ fn main() -> Result<()> {
 
 pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
     let files = read_dir_or_fail(path, Some(FileType::File)).context("Failed to read files")?;
+    let mut files_by_name = BTreeMap::new();
+    for file in files {
+        let name = file
+            .path()
+            .file_name()
+            .context(format!("Got file without filename: {:?}", file.path()))?
+            .to_string_lossy()
+            .to_string();
+
+        // Ignore the stagger.yml
+        if name == "stagger.yml" {
+            continue;
+        }
+
+        files_by_name.insert(name, file);
+    }
+
     let mut files_by_date = BTreeMap::new();
     println!("═══════════════════════════════════════════════════════════════");
     print_headline_table(format!("Checking folder: {path:?}"));
@@ -144,6 +192,12 @@ pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
     } else {
         StaggerConfig::default()
     };
+    // Make sure the sidecar declarations are valid.
+    for sidecar in &config.sidecar {
+        if sidecar.suffix.is_empty() {
+            bail!("Configured sidecar suffixes must not be empty");
+        }
+    }
 
     if let Some(regex) = &args.date_extraction_regex {
         config.regex = Some(regex.clone());
@@ -165,20 +219,9 @@ pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
     }
 
     // Go through all files and extract the datetime from its filename.
-    for file in files {
-        let name = file
-            .path()
-            .file_name()
-            .context(format!("Got file without filename: {:?}", file.path()))?
-            .to_string_lossy()
-            .to_string();
-
-        if name == "stagger.yml" {
-            continue;
-        }
-
+    let file_names = files_by_name.keys().cloned().collect::<Vec<_>>();
+    for name in file_names {
         let Some(captures) = re.captures(&name) else {
-            error!("Date extraction regex didn't match name. Ignoring file: {name}");
             continue;
         };
 
@@ -191,11 +234,32 @@ pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
             }
         };
 
-        files_by_date.insert(datetime, Entry::new(file));
+        // We got a valid file. Get the file from the files_by_name list.
+        let Some(file) = files_by_name.remove(&name) else {
+            continue;
+        };
+
+        // Sidecars are looked up by appending each configured suffix to the primary filename.
+        let sidecars = config
+            .sidecar
+            .iter()
+            .filter_map(|sidecar| files_by_name.remove(&format!("{name}{}", sidecar.suffix)))
+            .collect();
+
+        files_by_date.insert(datetime, Entry::new(file, sidecars));
     }
     if files_by_date.is_empty() {
         println!("No files for backup found.");
         return Ok(());
+    }
+
+    // Make sure there're no superfluous files
+    if !files_by_name.is_empty() {
+        error!("Found unmatched files in directory:");
+        for name in files_by_name.keys() {
+            error!("Didn't match name: {name}");
+        }
+        bail!("Aborting due to unmatched files");
     }
 
     let mut brackets = init_brackets()?;
@@ -252,7 +316,7 @@ pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
     let mut final_entries = Vec::new();
     println!("\nREMOVED FILES:");
     let mut table = pretty_table();
-    table.set_header(vec!["bracket", "bracket start", "filename"]);
+    table.set_header(vec!["bracket", "bracket start", "files"]);
     for bracket in brackets.into_iter() {
         let mut entries_iter = bracket.entries.into_iter();
         // Keep the very first entry.
@@ -264,13 +328,10 @@ pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
             table.add_row(vec![
                 bracket.description.to_string(),
                 format!("{:?}", bracket.start_date),
-                entry.dir_entry.file_name().to_string_lossy().to_string(),
+                entry.filenames(),
             ]);
             if args.execute {
-                remove_file(entry.dir_entry.path()).context(format!(
-                    "Failed to remove file: {:?}",
-                    entry.dir_entry.path()
-                ))?;
+                entry.remove_files()?;
             }
         }
     }
@@ -280,25 +341,22 @@ pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
         table.add_row(vec![
             "expired".to_string(),
             "-".to_string(),
-            entry.dir_entry.file_name().to_string_lossy().to_string(),
+            entry.filenames(),
         ]);
         if args.execute {
-            remove_file(entry.dir_entry.path()).context(format!(
-                "Failed to remove file: {:?}",
-                entry.dir_entry.path()
-            ))?;
+            entry.remove_files()?;
         }
     }
     println!("{table}");
 
     println!("\nREMAINING FILES:");
     let mut table = pretty_table();
-    table.set_header(vec!["bracket", "bracket start", "filename"]);
+    table.set_header(vec!["bracket", "bracket start", "files"]);
     for (entry, desc, date) in final_entries {
         table.add_row(vec![
             desc.to_string(),
             format!("{date:?}"),
-            entry.dir_entry.file_name().to_string_lossy().to_string(),
+            entry.filenames(),
         ]);
     }
     println!("{table}");
