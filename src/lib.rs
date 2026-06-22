@@ -7,6 +7,7 @@ pub mod notify;
 pub mod pipewire;
 pub mod process;
 pub mod ring;
+pub mod staggered_backups;
 pub mod table;
 pub mod timer;
 
