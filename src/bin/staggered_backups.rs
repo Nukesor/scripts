@@ -29,14 +29,24 @@ use regex::Regex;
 use script_utils::{
     FileType,
     fs::find_leaf_dirs,
-    logging,
-    read_dir_or_fail,
+    logging, read_dir_or_fail,
     table::{pretty_table, print_headline_table},
 };
 use serde::{Deserialize, Serialize};
 
 const DEFAULT_FORMAT: &str = "%Y-%m-%d_%H-%M";
 const DEFAULT_REGEX: &str = r"[a-z_]*_([0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2})\..*";
+
+#[derive(Debug)]
+struct Entry {
+    pub dir_entry: DirEntry,
+}
+
+impl Entry {
+    pub fn new(dir_entry: DirEntry) -> Self {
+        Self { dir_entry }
+    }
+}
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -173,7 +183,7 @@ pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
             }
         };
 
-        files_by_date.insert(datetime, file);
+        files_by_date.insert(datetime, Entry::new(file));
     }
     if files_by_date.is_empty() {
         println!("No files for backup found.");
@@ -246,11 +256,13 @@ pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
             table.add_row(vec![
                 bracket.description.to_string(),
                 format!("{:?}", bracket.start_date),
-                entry.file_name().to_string_lossy().to_string(),
+                entry.dir_entry.file_name().to_string_lossy().to_string(),
             ]);
             if args.execute {
-                remove_file(entry.path())
-                    .context(format!("Failed to remove file: {:?}", entry.path()))?;
+                remove_file(entry.dir_entry.path()).context(format!(
+                    "Failed to remove file: {:?}",
+                    entry.dir_entry.path()
+                ))?;
             }
         }
     }
@@ -263,7 +275,7 @@ pub fn run_staggered_backup(path: &PathBuf, args: &CliArguments) -> Result<()> {
         table.add_row(vec![
             desc.to_string(),
             format!("{date:?}"),
-            entry.file_name().to_string_lossy().to_string(),
+            entry.dir_entry.file_name().to_string_lossy().to_string(),
         ]);
     }
     println!("{table}");
@@ -277,7 +289,7 @@ struct Bracket {
     pub days: u32,
     pub description: &'static str,
     /// The sorted list of all entries that're in a given bracket.
-    pub entries: BTreeMap<NaiveDateTime, DirEntry>,
+    pub entries: BTreeMap<NaiveDateTime, Entry>,
 }
 
 impl Bracket {
