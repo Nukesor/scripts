@@ -86,7 +86,7 @@ fn create_context(args: &CliArguments) -> Result<TeraContext> {
         });
     }
 
-    let context = TeraContext::from_serialize(context).context("Failed to build tera context.")?;
+    let context = TeraContext::from_serialize(&context).context("Failed to build tera context.")?;
 
     debug!("Variables: {:#?}", &context);
 
